@@ -9,13 +9,13 @@
 #         alloc) as a flame graph. On Oscar use ASPROF_EVENT=itimer for CPU, since perf events
 #         are usually locked down. Separate pass so the two profilers don't interfere.
 #
-# Env: RATE (default 1000000), WARMUP (500000), FEED, JVM_FLAGS, OUT_ROOT, ASPROF_EVENT.
+# Env: RATE (default 1000000), WARMUP (200000), FEED, JVM_FLAGS, OUT_ROOT, ASPROF_EVENT.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VARIANT=${1:-baseline}
 RATE=${RATE:-1000000}
-WARMUP=${WARMUP:-500000}
+WARMUP=${WARMUP:-200000}
 JVM_FLAGS=${JVM_FLAGS:-"-Xms1g -Xmx1g -XX:+AlwaysPreTouch"}
 ASPROF_EVENT=${ASPROF_EVENT:-alloc}
 . scripts/lib.sh

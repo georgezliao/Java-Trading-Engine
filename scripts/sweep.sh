@@ -7,7 +7,7 @@
 #   RATES       space-separated msg/s           (default: 100k 250k 500k 1M 2M 4M)
 #   FEED        feed file                       (default: feeds/burst.bin, generated if missing)
 #   FEED_COUNT  messages when generating FEED   (default: 2000000)
-#   WARMUP      messages dropped per run        (default: 500000)
+#   WARMUP      messages dropped per run        (default: 200000, after one full unmeasured replay)
 #   JVM_FLAGS   extra JVM flags                 (default: -Xms1g -Xmx1g -XX:+AlwaysPreTouch)
 #   OUT_ROOT    where run folders go            (default: results/local)
 set -euo pipefail
@@ -15,7 +15,7 @@ cd "$(dirname "$0")/.."
 
 VARIANT=${1:-baseline}
 RATES=${RATES:-"100000 250000 500000 1000000 2000000 4000000"}
-WARMUP=${WARMUP:-500000}
+WARMUP=${WARMUP:-200000}
 JVM_FLAGS=${JVM_FLAGS:-"-Xms1g -Xmx1g -XX:+AlwaysPreTouch"}
 . scripts/lib.sh
 

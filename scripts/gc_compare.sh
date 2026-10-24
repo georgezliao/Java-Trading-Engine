@@ -5,7 +5,7 @@
 #   scripts/gc_compare.sh [variant]
 #
 # Env: GCS (default "G1 ZGC"; also Parallel, Serial, Epsilon), REPS (3), RATE (1000000),
-#      WARMUP (500000), HEAP (1g), FEED, OUT_ROOT. Then: python3 scripts/plot.py <run folder>
+#      WARMUP (200000), HEAP (1g), FEED, OUT_ROOT. Then: python3 scripts/plot.py <run folder>
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -13,7 +13,7 @@ VARIANT=${1:-baseline}
 GCS=${GCS:-"G1 ZGC"}
 REPS=${REPS:-3}
 RATE=${RATE:-1000000}
-WARMUP=${WARMUP:-500000}
+WARMUP=${WARMUP:-200000}
 HEAP=${HEAP:-1g}
 . scripts/lib.sh
 
