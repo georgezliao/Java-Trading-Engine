@@ -12,9 +12,7 @@ import java.util.TreeMap;
  * Baseline limit order book: price-time priority, boxed keys, one deque per level, cancels by
  * linear scan of the level. Deliberately naive; the ladder book in Phase 4 replaces it.
  */
-public final class OrderBook {
-
-    public static final long NO_PRICE = Long.MIN_VALUE;
+public final class OrderBook implements Book {
 
     private final NavigableMap<Long, ArrayDeque<Order>> bids = new TreeMap<>(Collections.reverseOrder());
     private final NavigableMap<Long, ArrayDeque<Order>> asks = new TreeMap<>();
@@ -25,6 +23,7 @@ public final class OrderBook {
         this.listener = listener;
     }
 
+    @Override
     public void add(long id, Side side, long price, int qty) {
         if (qty <= 0) {
             throw new IllegalArgumentException("qty must be positive: " + qty);
@@ -65,6 +64,7 @@ public final class OrderBook {
         }
     }
 
+    @Override
     public void cancel(long id) {
         Order order = byId.remove(id);
         if (order == null) {
@@ -80,15 +80,17 @@ public final class OrderBook {
         listener.onCancel(id, order.remaining);
     }
 
+    @Override
     public long bestBid() {
         return bids.isEmpty() ? NO_PRICE : bids.firstKey();
     }
 
+    @Override
     public long bestAsk() {
         return asks.isEmpty() ? NO_PRICE : asks.firstKey();
     }
 
-    /** Total resting quantity at a price on one side. */
+    @Override
     public int depth(Side side, long price) {
         ArrayDeque<Order> level = (side == Side.BUY ? bids : asks).get(price);
         if (level == null) {
@@ -101,6 +103,7 @@ public final class OrderBook {
         return total;
     }
 
+    @Override
     public int restingOrders() {
         return byId.size();
     }

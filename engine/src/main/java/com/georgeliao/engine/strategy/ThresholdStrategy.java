@@ -1,6 +1,6 @@
 package com.georgeliao.engine.strategy;
 
-import com.georgeliao.engine.book.OrderBook;
+import com.georgeliao.engine.book.Book;
 import com.georgeliao.engine.wire.Message;
 import com.georgeliao.engine.wire.Side;
 
@@ -14,14 +14,14 @@ public final class ThresholdStrategy {
     /** Strategy order ids live above this, so they never collide with feed ids. */
     public static final long ID_BASE = 1L << 62;
 
-    private final OrderBook book;
+    private final Book book;
     private final long threshold;
     private final int qty;
     private long reference = Long.MIN_VALUE;
     private long nextId = ID_BASE;
     private long triggers;
 
-    public ThresholdStrategy(OrderBook book, long threshold, int qty) {
+    public ThresholdStrategy(Book book, long threshold, int qty) {
         if (threshold <= 0 || qty <= 0) {
             throw new IllegalArgumentException("threshold and qty must be positive");
         }
@@ -32,7 +32,11 @@ public final class ThresholdStrategy {
 
     /** Returns true if this tick triggered an order. */
     public boolean onTick(Message.Tick tick) {
-        long price = tick.price();
+        return onTick(tick.price());
+    }
+
+    /** Primitive entry point for the allocation-free path. */
+    public boolean onTick(long price) {
         if (reference == Long.MIN_VALUE) {
             reference = price;
             return false;
