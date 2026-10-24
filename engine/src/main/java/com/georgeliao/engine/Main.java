@@ -4,11 +4,13 @@ import com.georgeliao.engine.book.HashingListener;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
 import com.georgeliao.engine.metrics.HistogramRecorder;
+import com.georgeliao.engine.metrics.RunMetadata;
 import com.georgeliao.engine.pipeline.RunResult;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 public final class Main {
@@ -39,6 +41,7 @@ public final class Main {
         HashingListener output = new HashingListener();
         Engine engine = new Engine(output);
         HistogramRecorder latency = new HistogramRecorder(config.warmup());
+        long[] gcBefore = RunMetadata.gcTotals();
         RunResult result = switch (config.variant()) {
             case "baseline" -> new BaselinePipeline(BaselinePipeline.DEFAULT_CAPACITY)
                     .run(feed, engine, config.rate(), latency);
@@ -55,7 +58,23 @@ public final class Main {
         System.out.println(HistogramRecorder.summary("triggered", latency.triggered()));
         if (config.out() != null) {
             latency.writeHgrm(config.out());
-            System.out.println("wrote " + config.out() + " and " + HistogramRecorder.triggeredPath(config.out()));
+            long[] gcAfter = RunMetadata.gcTotals();
+            Path meta = RunMetadata.pathFor(config.out());
+            new RunMetadata()
+                    .put("variant", config.variant())
+                    .put("feed", config.feed())
+                    .put("rate", config.rate())
+                    .put("warmup", config.warmup())
+                    .put("messages", result.messages())
+                    .put("triggers", result.triggers())
+                    .put("elapsed.ms", result.elapsedNanos() / 1e6)
+                    .put("achieved.rate", Math.round(result.messagesPerSecond()))
+                    .put("output.hash", output.hex())
+                    .put("output.events", output.events())
+                    .put("gc.collections", gcAfter[0] - gcBefore[0])
+                    .put("gc.time.ms", gcAfter[1] - gcBefore[1])
+                    .write(meta);
+            System.out.println("wrote " + config.out() + ", " + HistogramRecorder.triggeredPath(config.out()) + ", " + meta);
         }
     }
 }
