@@ -5,6 +5,7 @@ import com.georgeliao.engine.book.PooledOrderBook;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.AllocFreePipeline;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
+import com.georgeliao.engine.pipeline.LatencyRecorder;
 import com.georgeliao.engine.metrics.HistogramRecorder;
 import com.georgeliao.engine.metrics.RunMetadata;
 import com.georgeliao.engine.pipeline.RunResult;
@@ -40,20 +41,27 @@ public final class Main {
         }
         // Whole feed in memory before timing starts; no I/O on the hot path.
         ByteBuffer feed = ByteBuffer.wrap(Files.readAllBytes(config.feed())).order(ByteOrder.LITTLE_ENDIAN);
+        Variant variant = variant(config, feed);
+        if (variant == null) {
+            System.err.println("unknown variant " + config.variant());
+            System.exit(2);
+            return;
+        }
+
+        // Warm the JIT with full unmeasured replays (fresh engine, same code paths and types,
+        // including the recorder's warmup cutoff), so most compilation and deopts happen here and
+        // not inside the measured run. The measured run still starts from an empty book, which
+        // trips a few deopts in its first ~25 ms; a small --warmup cutoff drops those.
+        for (int pass = 1; pass <= config.warmupPasses(); pass++) {
+            RunResult warm = variant.run(new HashingListener(), new HistogramRecorder(config.warmup()));
+            System.out.printf("warmup pass %d: %.1f ms%n", pass, warm.elapsedNanos() / 1e6);
+        }
+
         HashingListener output = new HashingListener();
         HistogramRecorder latency = new HistogramRecorder(config.warmup());
         long[] gcBefore = RunMetadata.gcTotals();
-        RunResult result = switch (config.variant()) {
-            case "baseline" -> new BaselinePipeline(BaselinePipeline.DEFAULT_CAPACITY)
-                    .run(feed, new Engine(output), config.rate(), latency);
-            case "alloc-free" -> new AllocFreePipeline(BaselinePipeline.DEFAULT_CAPACITY)
-                    .run(feed, new Engine(new PooledOrderBook(output)), config.rate(), latency);
-            default -> {
-                System.err.println("unknown variant " + config.variant());
-                System.exit(2);
-                yield null;
-            }
-        };
+        RunResult result = variant.run(output, latency);
+        long[] gcAfter = RunMetadata.gcTotals();
         System.out.printf("%s: %d messages, %d triggers, %.1f ms, %.0f msg/s, output %s (%d events)%n",
                 config.variant(), result.messages(), result.triggers(), result.elapsedNanos() / 1e6,
                 result.messagesPerSecond(), output.hex(), output.events());
@@ -61,13 +69,13 @@ public final class Main {
         System.out.println(HistogramRecorder.summary("triggered", latency.triggered()));
         if (config.out() != null) {
             latency.writeHgrm(config.out());
-            long[] gcAfter = RunMetadata.gcTotals();
             Path meta = RunMetadata.pathFor(config.out());
             new RunMetadata()
                     .put("variant", config.variant())
                     .put("feed", config.feed())
                     .put("rate", config.rate())
                     .put("warmup", config.warmup())
+                    .put("warmup.passes", config.warmupPasses())
                     .put("messages", result.messages())
                     .put("triggers", result.triggers())
                     .put("elapsed.ms", result.elapsedNanos() / 1e6)
@@ -79,5 +87,21 @@ public final class Main {
                     .write(meta);
             System.out.println("wrote " + config.out() + ", " + HistogramRecorder.triggeredPath(config.out()) + ", " + meta);
         }
+    }
+
+    /** One measured or warmup replay with a fresh engine. */
+    private interface Variant {
+        RunResult run(HashingListener output, LatencyRecorder latency) throws InterruptedException;
+    }
+
+    private static Variant variant(Config config, ByteBuffer feed) {
+        int capacity = BaselinePipeline.DEFAULT_CAPACITY;
+        long rate = config.rate();
+        return switch (config.variant()) {
+            case "baseline" -> (out, lat) -> new BaselinePipeline(capacity).run(feed, new Engine(out), rate, lat);
+            case "alloc-free" -> (out, lat) ->
+                    new AllocFreePipeline(capacity).run(feed, new Engine(new PooledOrderBook(out)), rate, lat);
+            default -> null;
+        };
     }
 }
