@@ -3,6 +3,7 @@ package com.georgeliao.engine;
 import com.georgeliao.engine.book.HashingListener;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
+import com.georgeliao.engine.pipeline.LatencyRecorder;
 import com.georgeliao.engine.pipeline.RunResult;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -33,11 +34,13 @@ public final class Main {
             System.exit(2);
             return;
         }
+        // Whole feed in memory before timing starts; no I/O on the hot path.
         ByteBuffer feed = ByteBuffer.wrap(Files.readAllBytes(config.feed())).order(ByteOrder.LITTLE_ENDIAN);
         HashingListener output = new HashingListener();
         Engine engine = new Engine(output);
         RunResult result = switch (config.variant()) {
-            case "baseline" -> new BaselinePipeline(BaselinePipeline.DEFAULT_CAPACITY).run(feed, engine);
+            case "baseline" -> new BaselinePipeline(BaselinePipeline.DEFAULT_CAPACITY)
+                    .run(feed, engine, config.rate(), LatencyRecorder.NOOP);
             default -> {
                 System.err.println("unknown variant " + config.variant());
                 System.exit(2);

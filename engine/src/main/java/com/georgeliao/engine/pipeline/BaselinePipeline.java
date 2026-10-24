@@ -26,7 +26,19 @@ public final class BaselinePipeline {
         this.capacity = capacity;
     }
 
+    /** Unpaced run, no latency recording. Used for correctness checks. */
     public RunResult run(ByteBuffer feed, Engine engine) throws InterruptedException {
+        return run(feed, engine, Schedule.UNPACED, LatencyRecorder.NOOP);
+    }
+
+    /**
+     * Replays {@code feed} (already in memory) open-loop at {@code rate} msg/s, or unpaced if rate
+     * is {@link Schedule#UNPACED}.
+     */
+    public RunResult run(ByteBuffer feed, Engine engine, long rate, LatencyRecorder recorder)
+            throws InterruptedException {
+        // Small lead so both threads are running before the first message is due.
+        Schedule schedule = new Schedule(System.nanoTime() + 1_000_000, rate);
         BlockingQueue<Message> queue = new ArrayBlockingQueue<>(capacity);
         ByteBuffer frames = feed.duplicate().order(feed.order());
         AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -38,8 +50,10 @@ public final class BaselinePipeline {
                 long triggers = 0;
                 Message m;
                 while ((m = queue.take()) != END) {
+                    boolean triggered = engine.onMessage(m);
+                    recorder.record(messages, System.nanoTime() - schedule.intendedNanos(messages), triggered);
                     messages++;
-                    if (engine.onMessage(m)) {
+                    if (triggered) {
                         triggers++;
                     }
                 }
@@ -52,7 +66,9 @@ public final class BaselinePipeline {
 
         Thread producer = new Thread(() -> {
             try {
+                long i = 0;
                 while (frames.hasRemaining()) {
+                    schedule.awaitSend(i++);
                     queue.put(Codec.decode(frames));
                 }
                 queue.put(END);
@@ -62,12 +78,11 @@ public final class BaselinePipeline {
             }
         }, "reader");
 
-        long start = System.nanoTime();
         consumer.start();
         producer.start();
         producer.join();
         consumer.join();
-        long elapsed = System.nanoTime() - start;
+        long elapsed = System.nanoTime() - schedule.startNanos();
 
         if (failure.get() != null) {
             throw new IllegalStateException("pipeline failed", failure.get());
