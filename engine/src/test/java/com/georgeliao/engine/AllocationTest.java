@@ -2,7 +2,9 @@ package com.georgeliao.engine;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.georgeliao.engine.book.Book;
 import com.georgeliao.engine.book.HashingListener;
+import com.georgeliao.engine.book.LadderBook;
 import com.georgeliao.engine.book.PooledOrderBook;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.metrics.HistogramRecorder;
@@ -17,9 +19,18 @@ class AllocationTest {
 
     @Test
     void warmFramePathDoesNotAllocate() {
+        assertWarmPathAllocationFree("pooled", new PooledOrderBook(new HashingListener()));
+    }
+
+    @Test
+    void warmLadderPathDoesNotAllocate() {
+        assertWarmPathAllocationFree("ladder", new LadderBook(new HashingListener()));
+    }
+
+    private static void assertWarmPathAllocationFree(String label, Book book) {
         var threads = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
         ByteBuffer feed = FeedGenerator.generate(FeedGenerator.Profile.BURST, 400_000, 9);
-        Engine engine = new Engine(new PooledOrderBook(new HashingListener()));
+        Engine engine = new Engine(book);
         HistogramRecorder latency = new HistogramRecorder(0);
         FrameView view = new FrameView();
         int frames = feed.limit() / Codec.FRAME_SIZE;
@@ -36,6 +47,6 @@ class AllocationTest {
 
         // 300k messages. The baseline path allocates ~36 B/message just decoding (~10 MB).
         assertTrue(allocated < 64 * 1024, allocated + " bytes allocated over " + (frames - warm) + " messages");
-        System.out.println("alloc-free path: " + allocated + " bytes over " + (frames - warm) + " messages");
+        System.out.println(label + " path: " + allocated + " bytes over " + (frames - warm) + " messages");
     }
 }

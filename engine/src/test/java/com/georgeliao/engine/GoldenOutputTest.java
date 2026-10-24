@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.georgeliao.engine.book.HashingListener;
+import com.georgeliao.engine.book.LadderBook;
 import com.georgeliao.engine.book.PooledOrderBook;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.AllocFreePipeline;
@@ -71,6 +72,16 @@ class GoldenOutputTest {
         HashingListener out = new HashingListener();
         RunResult result = new AllocFreePipeline(BaselinePipeline.DEFAULT_CAPACITY)
                 .run(goldenFeed(), new Engine(new PooledOrderBook(out)));
+        assertEquals(TRIGGERS, result.triggers());
+        assertEquals(EVENTS, out.events());
+        assertEquals(HASH, out.hash(), "got " + out.hex());
+    }
+
+    @Test
+    void ladderBookMatchesGoldenHash() throws Exception {
+        HashingListener out = new HashingListener();
+        RunResult result = new AllocFreePipeline(BaselinePipeline.DEFAULT_CAPACITY)
+                .run(goldenFeed(), new Engine(new LadderBook(out)));
         assertEquals(TRIGGERS, result.triggers());
         assertEquals(EVENTS, out.events());
         assertEquals(HASH, out.hash(), "got " + out.hex());

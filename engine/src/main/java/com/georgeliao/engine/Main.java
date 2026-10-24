@@ -1,6 +1,7 @@
 package com.georgeliao.engine;
 
 import com.georgeliao.engine.book.HashingListener;
+import com.georgeliao.engine.book.LadderBook;
 import com.georgeliao.engine.book.PooledOrderBook;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.AllocFreePipeline;
@@ -101,6 +102,8 @@ public final class Main {
             case "baseline" -> (out, lat) -> new BaselinePipeline(capacity).run(feed, new Engine(out), rate, lat);
             case "alloc-free" -> (out, lat) ->
                     new AllocFreePipeline(capacity).run(feed, new Engine(new PooledOrderBook(out)), rate, lat);
+            case "ladder-book" -> (out, lat) ->
+                    new AllocFreePipeline(capacity).run(feed, new Engine(new LadderBook(out)), rate, lat);
             default -> null;
         };
     }
