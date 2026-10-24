@@ -5,7 +5,7 @@
 #
 # Pass 1: JFR with the "profile" settings, plus text views (allocation by site, hot methods,
 #         GC pauses) so the results can be read without Mission Control.
-# Pass 2: only if ASYNC_PROFILER_HOME is set, async-profiler in ASPROF_EVENT mode (default
+# Pass 2: only if ASYNC_PROFILER_HOME is set (or a Homebrew install is found), async-profiler in ASPROF_EVENT mode (default
 #         alloc) as a flame graph. On Oscar use ASPROF_EVENT=itimer for CPU, since perf events
 #         are usually locked down. Separate pass so the two profilers don't interfere.
 #
@@ -32,6 +32,10 @@ for view in allocation-by-site allocation-by-class hot-methods gc-pauses; do
   "$JFR_BIN" view --width 160 "$view" "$RUN/$VARIANT.jfr" > "$RUN/jfr-$view.txt" 2>&1 || true
 done
 
+# Homebrew installs the agent under /opt/homebrew/lib.
+if [ -z "${ASYNC_PROFILER_HOME:-}" ] && [ -f /opt/homebrew/lib/libasyncProfiler.dylib ]; then
+  ASYNC_PROFILER_HOME=/opt/homebrew
+fi
 if [ -n "${ASYNC_PROFILER_HOME:-}" ]; then
   LIB=$(ls "$ASYNC_PROFILER_HOME"/lib/libasyncProfiler.* 2>/dev/null | head -1)
   if [ -z "$LIB" ]; then
