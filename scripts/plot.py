@@ -65,12 +65,12 @@ def fmt(v):
 
 
 def table(rs):
-    head = ["variant", "target msg/s", "achieved", "p50 us", "p99 us", "p99.9 us", "p99.99 us",
+    head = ["run", "target msg/s", "achieved", "p50 us", "p99 us", "p99.9 us", "p99.99 us",
             "max us", "trig p99.9 us", "GCs"]
     lines = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
     for r in rs:
         m = r["meta"]
-        cells = [r["variant"], f"{r['rate']:,}", f"{int(m['achieved.rate']):,}" if "achieved.rate" in m else "-"]
+        cells = [r["name"], f"{r['rate']:,}", f"{int(m['achieved.rate']):,}" if "achieved.rate" in m else "-"]
         cells += [fmt(at(r["rows"], p)) for p in PCTS]
         cells += [fmt(r["max"]), fmt(at(r["trig"], 99.9)) if r["trig"] else "-", m.get("gc.collections", "-")]
         lines.append("| " + " | ".join(cells) + " |")
@@ -83,7 +83,7 @@ def plot(rs, out):
         pts = [(1 / (1 - p), v) for v, p in r["rows"] if p < 1]
         if pts:
             xs, ys = zip(*pts)
-            ax.plot(xs, ys, label=f"{r['variant']} @ {r['rate']:,}/s", linewidth=1.2)
+            ax.plot(xs, ys, label=r["name"], linewidth=1.2)
     ticks = [2, 10, 100, 1000, 10000, 100000]
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -102,7 +102,7 @@ def main():
     ap.add_argument("folders", nargs="+")
     ap.add_argument("--out")
     a = ap.parse_args()
-    rs = sorted(runs(a.folders), key=lambda r: (r["variant"], r["rate"]))
+    rs = sorted(runs(a.folders), key=lambda r: (r["variant"], r["rate"], r["name"]))
     if not rs:
         raise SystemExit("no .hgrm files found")
     out = Path(a.out or a.folders[0])
