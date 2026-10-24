@@ -1,7 +1,9 @@
 package com.georgeliao.engine;
 
 import com.georgeliao.engine.book.HashingListener;
+import com.georgeliao.engine.book.PooledOrderBook;
 import com.georgeliao.engine.feed.FeedGenerator;
+import com.georgeliao.engine.pipeline.AllocFreePipeline;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
 import com.georgeliao.engine.metrics.HistogramRecorder;
 import com.georgeliao.engine.metrics.RunMetadata;
@@ -39,12 +41,13 @@ public final class Main {
         // Whole feed in memory before timing starts; no I/O on the hot path.
         ByteBuffer feed = ByteBuffer.wrap(Files.readAllBytes(config.feed())).order(ByteOrder.LITTLE_ENDIAN);
         HashingListener output = new HashingListener();
-        Engine engine = new Engine(output);
         HistogramRecorder latency = new HistogramRecorder(config.warmup());
         long[] gcBefore = RunMetadata.gcTotals();
         RunResult result = switch (config.variant()) {
             case "baseline" -> new BaselinePipeline(BaselinePipeline.DEFAULT_CAPACITY)
-                    .run(feed, engine, config.rate(), latency);
+                    .run(feed, new Engine(output), config.rate(), latency);
+            case "alloc-free" -> new AllocFreePipeline(BaselinePipeline.DEFAULT_CAPACITY)
+                    .run(feed, new Engine(new PooledOrderBook(output)), config.rate(), latency);
             default -> {
                 System.err.println("unknown variant " + config.variant());
                 System.exit(2);
