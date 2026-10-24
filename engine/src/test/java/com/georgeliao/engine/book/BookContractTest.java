@@ -10,14 +10,18 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class OrderBookTest {
+/** Behaviour every {@link Book} must share. Subclasses pick the implementation. */
+abstract class BookContractTest {
+
+    abstract Book create(BookListener listener);
+
 
     private final List<String> events = new ArrayList<>();
-    private OrderBook book;
+    private Book book;
 
     @BeforeEach
     void setUp() {
-        book = new OrderBook(new BookListener() {
+        book = create(new BookListener() {
             @Override public void onRest(long id, long price, int qty) { events.add("rest " + id + " " + qty + "@" + price); }
             @Override public void onFill(long a, long r, long price, int qty) { events.add("fill " + a + "x" + r + " " + qty + "@" + price); }
             @Override public void onCancel(long id, int qty) { events.add("cancel " + id + " " + qty); }
@@ -59,7 +63,7 @@ class OrderBookTest {
         book.add(1, BUY, 100, 4);
         book.add(2, SELL, 99, 10);
         assertEquals(List.of("rest 1 4@100", "fill 2x1 4@100", "rest 2 6@99"), events);
-        assertEquals(OrderBook.NO_PRICE, book.bestBid());
+        assertEquals(Book.NO_PRICE, book.bestBid());
         assertEquals(99, book.bestAsk());
     }
 
@@ -74,7 +78,7 @@ class OrderBookTest {
         assertEquals(List.of("cancel 1 6", "reject 1", "reject 42"), events.subList(3, 6));
         assertEquals(3, book.depth(BUY, 100));
         book.cancel(2);
-        assertEquals(OrderBook.NO_PRICE, book.bestBid());
+        assertEquals(Book.NO_PRICE, book.bestBid());
         assertEquals(0, book.restingOrders());
     }
 
