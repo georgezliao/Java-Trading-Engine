@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Java / benchmarks
+target/
+*.class
+*.jfr
+*.hgrm
+results/local/
+feeds/*.bin
+.idea/
+.DS_Store
