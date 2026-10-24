@@ -12,10 +12,11 @@ class ConfigTest {
     @Test
     void parsesAllFlags() {
         Config c = Config.parse(new String[] {
-            "--variant", "spsc", "--feed", "feeds/burst.bin", "--rate", "500000", "--out", "out.hgrm"});
+            "--variant", "spsc", "--feed", "feeds/burst.bin", "--rate", "500000", "--warmup", "1000", "--out", "out.hgrm"});
         assertEquals("spsc", c.variant());
         assertEquals(Path.of("feeds/burst.bin"), c.feed());
         assertEquals(500_000, c.rate());
+        assertEquals(1_000, c.warmup());
         assertEquals(Path.of("out.hgrm"), c.out());
     }
 
@@ -24,6 +25,7 @@ class ConfigTest {
         Config c = Config.parse(new String[] {"--feed", "f.bin"});
         assertEquals("baseline", c.variant());
         assertEquals(100_000, c.rate());
+        assertEquals(0, c.warmup());
         assertNull(c.out());
     }
 
@@ -34,5 +36,7 @@ class ConfigTest {
         assertThrows(IllegalArgumentException.class, () -> Config.parse(new String[] {"--bogus", "x"}));
         assertThrows(IllegalArgumentException.class,
                 () -> Config.parse(new String[] {"--feed", "f.bin", "--rate", "0"}));
+        assertThrows(IllegalArgumentException.class,
+                () -> Config.parse(new String[] {"--feed", "f.bin", "--warmup", "-1"}));
     }
 }

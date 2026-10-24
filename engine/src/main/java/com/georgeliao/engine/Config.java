@@ -3,15 +3,16 @@ package com.georgeliao.engine;
 import java.nio.file.Path;
 
 /** Command-line options for a single run. */
-public record Config(String variant, Path feed, long rate, Path out) {
+public record Config(String variant, Path feed, long rate, long warmup, Path out) {
 
     public static final String USAGE =
-            "usage: engine --variant <name> --feed <file> [--rate <msgs/s>] [--out <file.hgrm>]";
+            "usage: engine --variant <name> --feed <file> [--rate <msgs/s>] [--warmup <msgs>] [--out <file.hgrm>]";
 
     public static Config parse(String[] args) {
         String variant = "baseline";
         Path feed = null;
         long rate = 100_000;
+        long warmup = 0;
         Path out = null;
         for (int i = 0; i < args.length; i++) {
             String flag = args[i];
@@ -23,6 +24,7 @@ public record Config(String variant, Path feed, long rate, Path out) {
                 case "--variant" -> variant = value;
                 case "--feed" -> feed = Path.of(value);
                 case "--rate" -> rate = Long.parseLong(value);
+                case "--warmup" -> warmup = Long.parseLong(value);
                 case "--out" -> out = Path.of(value);
                 default -> throw new IllegalArgumentException("unknown flag " + flag);
             }
@@ -33,6 +35,9 @@ public record Config(String variant, Path feed, long rate, Path out) {
         if (rate <= 0) {
             throw new IllegalArgumentException("--rate must be positive");
         }
-        return new Config(variant, feed, rate, out);
+        if (warmup < 0) {
+            throw new IllegalArgumentException("--warmup must be >= 0");
+        }
+        return new Config(variant, feed, rate, warmup, out);
     }
 }

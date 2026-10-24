@@ -3,7 +3,7 @@ package com.georgeliao.engine;
 import com.georgeliao.engine.book.HashingListener;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
-import com.georgeliao.engine.pipeline.LatencyRecorder;
+import com.georgeliao.engine.metrics.HistogramRecorder;
 import com.georgeliao.engine.pipeline.RunResult;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,9 +38,10 @@ public final class Main {
         ByteBuffer feed = ByteBuffer.wrap(Files.readAllBytes(config.feed())).order(ByteOrder.LITTLE_ENDIAN);
         HashingListener output = new HashingListener();
         Engine engine = new Engine(output);
+        HistogramRecorder latency = new HistogramRecorder(config.warmup());
         RunResult result = switch (config.variant()) {
             case "baseline" -> new BaselinePipeline(BaselinePipeline.DEFAULT_CAPACITY)
-                    .run(feed, engine, config.rate(), LatencyRecorder.NOOP);
+                    .run(feed, engine, config.rate(), latency);
             default -> {
                 System.err.println("unknown variant " + config.variant());
                 System.exit(2);
@@ -50,5 +51,11 @@ public final class Main {
         System.out.printf("%s: %d messages, %d triggers, %.1f ms, %.0f msg/s, output %s (%d events)%n",
                 config.variant(), result.messages(), result.triggers(), result.elapsedNanos() / 1e6,
                 result.messagesPerSecond(), output.hex(), output.events());
+        System.out.println(HistogramRecorder.summary("all", latency.all()));
+        System.out.println(HistogramRecorder.summary("triggered", latency.triggered()));
+        if (config.out() != null) {
+            latency.writeHgrm(config.out());
+            System.out.println("wrote " + config.out() + " and " + HistogramRecorder.triggeredPath(config.out()));
+        }
     }
 }
