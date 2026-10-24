@@ -1,6 +1,6 @@
 package com.georgeliao.engine;
 
-import com.georgeliao.engine.book.BookListener;
+import com.georgeliao.engine.book.HashingListener;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
 import com.georgeliao.engine.pipeline.RunResult;
@@ -34,7 +34,8 @@ public final class Main {
             return;
         }
         ByteBuffer feed = ByteBuffer.wrap(Files.readAllBytes(config.feed())).order(ByteOrder.LITTLE_ENDIAN);
-        Engine engine = new Engine(BookListener.NOOP);
+        HashingListener output = new HashingListener();
+        Engine engine = new Engine(output);
         RunResult result = switch (config.variant()) {
             case "baseline" -> new BaselinePipeline(BaselinePipeline.DEFAULT_CAPACITY).run(feed, engine);
             default -> {
@@ -43,7 +44,8 @@ public final class Main {
                 yield null;
             }
         };
-        System.out.printf("%s: %d messages, %d triggers, %.1f ms, %.0f msg/s%n", config.variant(),
-                result.messages(), result.triggers(), result.elapsedNanos() / 1e6, result.messagesPerSecond());
+        System.out.printf("%s: %d messages, %d triggers, %.1f ms, %.0f msg/s, output %s (%d events)%n",
+                config.variant(), result.messages(), result.triggers(), result.elapsedNanos() / 1e6,
+                result.messagesPerSecond(), output.hex(), output.events());
     }
 }
