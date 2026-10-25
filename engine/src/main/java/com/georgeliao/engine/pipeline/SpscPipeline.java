@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Experiment C. Frame offsets go through a {@link SlotSignalRing} instead of an
  * {@code ArrayBlockingQueue}: no lock, no parking, no allocation on the handoff. (The slot-signalled
  * ring measured ~28 ns/handoff vs ~65 ns for the index-based {@link SpscIntRing} in HandoffBench.) Both threads
- * busy-spin (reader when the ring is full, engine when it's empty), so this burns two cores.
- * Wait strategies come in experiment E.
+ * busy-spin by default (reader when the ring is full, engine when it's empty), so this burns two
+ * cores. {@link WaitStrategy} (experiment E) changes what the engine does when the ring is empty.
  *
  * <p>Offsets are non-negative, so {@code -1} marks the end of the feed.
  */
@@ -23,9 +23,15 @@ public final class SpscPipeline {
     private static final int BATCH = 256;
 
     private final int capacity;
+    private final WaitStrategy wait;
 
     public SpscPipeline(int capacity) {
+        this(capacity, WaitStrategy.SPIN);
+    }
+
+    public SpscPipeline(int capacity, WaitStrategy wait) {
         this.capacity = capacity;
+        this.wait = wait;
     }
 
     public RunResult run(ByteBuffer feed, Engine engine) throws InterruptedException {
@@ -39,7 +45,7 @@ public final class SpscPipeline {
         int start = feed.position();
         int end = feed.limit();
         AtomicReference<Throwable> failure = new AtomicReference<>();
-        Consumer consumer = new Consumer(ring, feed, engine, recorder, schedule, failure);
+        Consumer consumer = new Consumer(ring, feed, engine, recorder, schedule, wait, failure);
 
         Thread engineThread = new Thread(consumer, "engine");
         Thread producer = new Thread(() -> {
@@ -82,6 +88,7 @@ public final class SpscPipeline {
         private final Engine engine;
         private final LatencyRecorder recorder;
         private final Schedule schedule;
+        private final WaitStrategy wait;
         private final AtomicReference<Throwable> failure;
         private final FrameView view = new FrameView();
         private boolean done;
@@ -89,12 +96,13 @@ public final class SpscPipeline {
         long triggers;
 
         Consumer(SlotSignalRing ring, ByteBuffer feed, Engine engine, LatencyRecorder recorder, Schedule schedule,
-                 AtomicReference<Throwable> failure) {
+                 WaitStrategy wait, AtomicReference<Throwable> failure) {
             this.ring = ring;
             this.feed = feed;
             this.engine = engine;
             this.recorder = recorder;
             this.schedule = schedule;
+            this.wait = wait;
             this.failure = failure;
         }
 
@@ -107,7 +115,7 @@ public final class SpscPipeline {
                         if (failure.get() != null) {
                             return;
                         }
-                        Thread.onSpinWait();
+                        wait.idle();
                     }
                 }
             } catch (Throwable t) {
