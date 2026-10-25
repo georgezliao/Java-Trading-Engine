@@ -22,6 +22,7 @@
     <jmh.version>1.37</jmh.version>
     <disruptor.version>4.0.0</disruptor.version>
     <jol.version>0.17</jol.version>
+    <affinity.version>3.23.3</affinity.version>
   </properties>
 
   <dependencyManagement>
