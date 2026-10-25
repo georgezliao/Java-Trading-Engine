@@ -1,89 +1,72 @@
 # Java Trading Engine
 
-A small order-matching engine in Java, built as a test rig for one question: where does tail latency come from, and what actually moves it?
+A single-instrument limit order book and trading strategy in Java, plus a harness for measuring its tail latency. A reader thread replays a binary market-data feed at a fixed rate, an engine thread runs the book and strategy, and each run writes latency histograms and a hash of every event the book produced.
 
-The engine itself is deliberately boring. One instrument, a limit order book, a toy mean-reversion strategy, two threads. The interesting part is the measurement setup and the sequence of variants, each one changing one thing and producing the exact same output as the baseline.
+The engine comes in several variants. Each one changes one part of the hot path (allocation, book data structure, thread handoff, wait strategy) and has to produce the same output hash as the baseline. Notes on what the experiments showed are in [docs/findings.md](docs/findings.md).
 
-## What's here
+## Build and run
 
-```
-engine/       the engine, feed generator, pipelines, measurement harness
-benchmarks/   JMH benchmarks (decode, queue handoff) and a JOL layout dump
-scripts/      sweeps, GC comparison, profiling, Epsilon proof, Oscar Slurm job, plotting
-```
-
-The pipeline: a reader thread replays a binary feed (32-byte little-endian frames: new order, cancel, tick) and hands messages to an engine thread that runs the book and strategy. Every run hashes every book event (rest, fill, cancel, cancel-reject) into one 64-bit value. A 5,000-message golden feed is committed with its hash, and every variant has to reproduce it.
-
-## Variants
-
-| variant | change from the previous one |
-|---|---|
-| `baseline` | decode each frame into a `record`, `ArrayBlockingQueue` handoff, `TreeMap<Long, ArrayDeque<Order>>` book |
-| `alloc-free` | flyweight reads straight off the feed buffer, pooled orders, Agrona primitive maps; same `ArrayBlockingQueue` |
-| `ladder-book` | book becomes direct-indexed price levels over primitive arrays |
-| `spsc` | `ArrayBlockingQueue` replaced by a lock-free SPSC ring; consumer wait strategy via `--wait spin\|yield\|park` |
-
-Plus `--cpus reader,engine` to pin threads (Linux), and any JVM flags for GC comparisons.
-
-## How it's measured
-
-- The feed is generated from a seed and loaded fully into memory before timing.
-- Replay is open-loop. Message `i` is due at `start + i / rate`, and latency is measured from that due time, not from when the reader actually sent it. If the engine stalls, every message queued behind the stall is charged for it. This is the coordinated omission thing from Gil Tene's talk; a test stalls the engine for 20 ms and checks the messages behind it report it.
-- Two HdrHistograms per run: all messages, and only ticks that triggered a strategy order.
-- JIT warmup is two full unmeasured replays with a fresh engine, then the first 200k messages of the measured run are dropped too. Getting this right took a while; see below.
-- Every histogram has a `.meta` file next to it: JVM, flags, GC, host, CPUs, pinning, output hash, GC count and CPU time during the run.
-
-## Running it
-
-Needs JDK 25 and Maven.
+Requires JDK 25 and Maven 3.9.
 
 ```bash
 mvn -q -B verify
 java -jar engine/target/engine.jar gen --profile burst --count 2000000 --seed 1 --out feeds/burst.bin
-java -jar engine/target/engine.jar --variant spsc --feed feeds/burst.bin --rate 1000000 --warmup 200000
-scripts/sweep.sh spsc
-python3 scripts/plot.py results/local/<run>
+java -jar engine/target/engine.jar --variant spsc --feed feeds/burst.bin --rate 1000000 --warmup 200000 --out run/spsc.hgrm
 ```
 
-Docker (`docker build -t trading-engine . && docker run --rm trading-engine`) works as a way to run it anywhere. Container numbers aren't used below.
+The last command prints throughput, the output hash, and p50/p99/p99.9/p99.99/max latency, and writes `run/spsc.hgrm`, `run/spsc-triggered.hgrm` and `run/spsc.meta`.
 
-## Results
+Other options: `--warmup-passes N` (default 2), `--cpus reader,engine` to pin the two threads (Linux only), `--wait spin|yield|park` for the `spsc` consumer.
 
-All headline numbers come from `scripts/oscar.sbatch` on one node type of Brown's Oscar cluster: an exclusive `48core` node (Intel Cascade Lake), threads pinned to separate physical cores on one socket, configs interleaved within each repetition.
+## Variants
 
-**TODO: Oscar results.** Latency-vs-throughput table, percentile plot, per-config spread across 5 reps.
+| `--variant` | Handoff | Decode | Book |
+|---|---|---|---|
+| `baseline` | `ArrayBlockingQueue` of records | new `record` per message | `TreeMap<Long, ArrayDeque<Order>>` |
+| `alloc-free` | `ArrayBlockingQueue` of reused offset slots | `FrameView` flyweight over the feed buffer | `PooledOrderBook`: pooled orders, Agrona primitive maps |
+| `ladder-book` | same as `alloc-free` | same as `alloc-free` | `LadderBook`: price levels indexed directly by price, orders in primitive arrays |
+| `spsc` | `SlotSignalRing`, a lock-free single-producer single-consumer ring | same as `alloc-free` | `LadderBook` |
 
-What wasn't controlled on Oscar: no `isolcpus`, no `nohz_full`, no control over the frequency governor or turbo. It's a shared cluster and I don't have root. The node is exclusive, so nothing else runs on it, but the OS still does.
+All books implement `Book` and share one set of contract tests. `PooledOrderBookTest` and `LadderBookTest` also replay generated feeds through both the new book and the `TreeMap` book and compare the event hashes.
 
-## Things I found along the way
+## How latency is measured
 
-These come from development on an M4 MacBook Air. macOS can't pin threads and moves them between performance and efficiency cores, so run-to-run tail latency varied by 3x or more. I don't compare Mac numbers against Oscar numbers, and I only trust Mac results that are about mechanism, not magnitude.
+- The feed is generated from a seed and read fully into memory before timing starts. Frames are 32 bytes, little-endian: new order, cancel, or tick (`Codec` documents the layout).
+- Replay is open-loop. Message `i` is due at `start + i / rate`, and latency is measured from that due time to the moment the engine finishes the message. If the engine stalls, every message queued behind the stall records the delay. `OpenLoopTest` checks this by stalling the engine for 20 ms.
+- Latency goes into two HdrHistograms: all messages, and only the ticks that made the strategy send an order.
+- Before the measured run, the full feed is replayed twice with a fresh engine so JIT compilation and deoptimization happen outside the measurement. The first `--warmup` messages of the measured run are dropped as well.
+- The `.meta` file records the JVM, flags, collector, host, CPU count, pinning, wait strategy, output hash, GC count and process CPU time for the run.
 
-**The baseline tail on the Mac wasn't GC.** Sweeps at 200k to 2M msg/s had zero collections in the measured window, yet p99.9 was in the milliseconds. A CPU profile put about 40% of samples in `ArrayBlockingQueue`'s `signal()` and `unpark`, against 16% in decoding.
+## Correctness
 
-**Escape analysis didn't remove the decoded record.** A JMH benchmark where the record never leaves the method still allocates 35.7 B/op, same as when it escapes to a Blackhole. My guess is that `decode` returns one of three record types through one switch and C2 gives up on scalar replacement. I haven't confirmed that with `-XX:+PrintEscapeAnalysis`. JOL says the records are 48 and 32 bytes, which matches 35.7 B for the feed's message mix.
+`GoldenOutputTest` replays a committed 5,000-message feed (`engine/src/test/resources/feeds/golden-burst-5k.bin`) through every variant and checks the output hash, event count and trigger count. If engine behavior changes on purpose, the constants in that test change in their own commit.
 
-**The alloc-free variant first looked worse than baseline.** 5 of 6 runs had p99 in the tens to hundreds of ms. `-XX:+PrintCompilation` showed why: the warmup cutoff was an `index < warmup` branch that was always true until message 500k, so C2 compiled it as never-false, hit an uncommon trap mid-run and took ~48 ms to recompile while messages piled up. The fix was warming up with full separate replays. A second warmup pass was needed later because the ladder book's first-order branch did the same thing.
+`AllocationTest` measures bytes allocated by the engine thread over 300k warm messages for the pooled and ladder paths. `scripts/epsilon_proof.sh` runs `alloc-free` under Epsilon GC with a 128 MB heap, where nothing is ever freed, and checks it still matches the baseline hash.
 
-**Epsilon is a good allocation test.** With a 128 MB heap and no GC, `alloc-free` replays the 2M-message feed and matches the reference hash, `baseline` dies with OutOfMemoryError. A thread-allocation-counter test puts the warm ladder path at 0 bytes over 300k messages.
+## Scripts
 
-**My first SPSC ring lost to Agrona's.** JMH handoff cost, 1000-int bursts to a spinning consumer, median of 5 fork means:
-
-| queue | ns/handoff |
+| Script | What it does |
 |---|---|
-| `ArrayBlockingQueue` | 189 |
-| Disruptor (`EventPoller`) | 151 |
-| my ring v1 (shared head/tail indices) | 65-76 |
-| Agrona `OneToOneRingBuffer` | 48-52 |
-| my ring v2 (slot-signalled) | 27.6 |
+| `scripts/sweep.sh [variant]` | one JVM per rate across a list of rates, results in `results/local/` |
+| `scripts/gc_compare.sh [variant]` | same run under several collectors, interleaved |
+| `scripts/profile.sh [variant]` | JFR recording and, if installed, an async-profiler pass |
+| `scripts/epsilon_proof.sh` | allocation check described above |
+| `scripts/plot.py <run dirs>` | percentile plot and latency-vs-throughput table from `.hgrm` files |
+| `scripts/oscar.sbatch` | the measurement job for Brown's Oscar cluster |
 
-v1's consumer read the producer's `tail` on every drain, so that cache line bounced between cores constantly. Agrona's consumer never reads the producer's position; it reads a length header inside each record. v2 takes the same idea further: a zero slot means empty, the consumer clears each slot after reading it, and neither side reads the other's index. That's the ring the `spsc` variant uses. Padding is 128 bytes because M-series cores use 128-byte lines; JOL confirms the producer and consumer fields end up 136-144 bytes apart.
+JMH benchmarks are in `benchmarks/`: `DecodeBench` (allocation of the decode step), `HandoffBench` (cross-thread handoff cost for `ArrayBlockingQueue`, both in-house rings, Agrona `OneToOneRingBuffer` and the Disruptor), and `LayoutDump` (JOL object layouts). Run them with `java -jar benchmarks/target/benchmarks.jar <name>`.
 
-**Wait strategy shows up in the median.** With the ring, p50 went from about 2.5 us (`ArrayBlockingQueue` variants) to 0.2 us with a spinning consumer. Parking costs about 3 us at the median on macOS, which is roughly its wake-up time. Spinning costs a core. The reader thread always spins on the send schedule, so parking the consumer only saves about half a core of total CPU.
+## Measurement environment
 
-## Not done / open
+Reported numbers come from `scripts/oscar.sbatch` on an exclusive Oscar `48core` node (Intel Cascade Lake). The job picks two physical cores on one socket for the reader and engine threads and a third for JVM housekeeping, restricts the JVM to them with `taskset`, and interleaves all configurations within each of 5 repetitions. Results are not in yet.
 
-- Oscar results (above).
-- Hyperthread siblings vs separate physical cores for the spsc pair is in the Oscar job but hasn't run yet.
-- The reader busy-spins between sends, which inflates CPU numbers for every wait strategy.
-- `docker build` hasn't been tried.
+On Oscar there is no control over `isolcpus`, `nohz_full`, the frequency governor or turbo. Development runs on macOS are not comparable: macOS has no thread pinning and moves threads between performance and efficiency cores.
+
+The Dockerfile builds and runs the engine anywhere (`docker build -t trading-engine . && docker run --rm trading-engine`). It hasn't been built yet, and container timings aren't used.
+
+## Limitations
+
+- One instrument and one toy strategy. The book handles price-time priority, partial fills and cancels, nothing else.
+- The feed carries no timestamps. The `burst` profile changes message content (bigger price moves, more orders and cancels), not arrival timing.
+- The reader thread busy-spins until each message is due, so process CPU time is at least one core regardless of wait strategy.
+- Thread pinning uses OpenHFT affinity and does nothing on macOS. The Linux path hasn't been checked yet.
