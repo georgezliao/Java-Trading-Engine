@@ -27,7 +27,7 @@ class ConfigTest {
         assertEquals("baseline", c.variant());
         assertEquals(100_000, c.rate());
         assertEquals(0, c.warmup());
-        assertEquals(1, c.warmupPasses());
+        assertEquals(2, c.warmupPasses());
         assertNull(c.out());
     }
 

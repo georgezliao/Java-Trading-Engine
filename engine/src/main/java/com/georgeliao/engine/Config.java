@@ -13,7 +13,7 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
         Path feed = null;
         long rate = 100_000;
         long warmup = 0;
-        int warmupPasses = 1;
+        int warmupPasses = 2;
         Path out = null;
         for (int i = 0; i < args.length; i++) {
             String flag = args[i];
