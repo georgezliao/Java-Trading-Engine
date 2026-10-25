@@ -23,6 +23,8 @@ fi
 
 # CPUS="reader,engine" pins the two pipeline threads (Linux only; ignored on macOS).
 PIN=${CPUS:+--cpus $CPUS}
+# WAIT=spin|yield|park sets the spsc consumer wait strategy.
+PIN="$PIN${WAIT:+ --wait $WAIT}"
 
 # new_run <name>: make results/local/<timestamp>-<name>, record git + java, print the path.
 new_run() {

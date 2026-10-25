@@ -1,14 +1,15 @@
 package com.georgeliao.engine;
 
+import com.georgeliao.engine.pipeline.WaitStrategy;
 import java.nio.file.Path;
 
 /** Command-line options for a single run. */
 public record Config(String variant, Path feed, long rate, long warmup, int warmupPasses, int readerCpu, int engineCpu,
-        Path out) {
+        WaitStrategy waitStrategy, Path out) {
 
     public static final String USAGE =
             "usage: engine --variant <name> --feed <file> [--rate <msgs/s>] [--warmup <msgs>] [--warmup-passes <n>] [--cpus <reader>,<engine>]"
-            + " [--out <file.hgrm>]";
+            + " [--wait spin|yield|park] [--out <file.hgrm>]";
 
     public static Config parse(String[] args) {
         String variant = "baseline";
@@ -18,6 +19,7 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
         int warmupPasses = 2;
         int readerCpu = -1;
         int engineCpu = -1;
+        WaitStrategy wait = WaitStrategy.SPIN;
         Path out = null;
         for (int i = 0; i < args.length; i++) {
             String flag = args[i];
@@ -39,6 +41,7 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
                     readerCpu = Integer.parseInt(cpus[0].trim());
                     engineCpu = Integer.parseInt(cpus[1].trim());
                 }
+                case "--wait" -> wait = WaitStrategy.parse(value);
                 case "--out" -> out = Path.of(value);
                 default -> throw new IllegalArgumentException("unknown flag " + flag);
             }
@@ -52,6 +55,6 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
         if (warmup < 0 || warmupPasses < 0) {
             throw new IllegalArgumentException("--warmup and --warmup-passes must be >= 0");
         }
-        return new Config(variant, feed, rate, warmup, warmupPasses, readerCpu, engineCpu, out);
+        return new Config(variant, feed, rate, warmup, warmupPasses, readerCpu, engineCpu, wait, out);
     }
 }

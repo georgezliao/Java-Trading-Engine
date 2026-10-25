@@ -12,6 +12,7 @@ import com.georgeliao.engine.metrics.HistogramRecorder;
 import com.georgeliao.engine.metrics.RunMetadata;
 import com.georgeliao.engine.pipeline.RunResult;
 import com.georgeliao.engine.pipeline.SpscPipeline;
+import java.lang.management.ManagementFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -63,12 +64,15 @@ public final class Main {
 
         HashingListener output = new HashingListener();
         HistogramRecorder latency = new HistogramRecorder(config.warmup());
+        var os = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         long[] gcBefore = RunMetadata.gcTotals();
+        long cpuBefore = os.getProcessCpuTime();
         RunResult result = variant.run(output, latency);
+        long cpuNanos = os.getProcessCpuTime() - cpuBefore;
         long[] gcAfter = RunMetadata.gcTotals();
-        System.out.printf("%s: %d messages, %d triggers, %.1f ms, %.0f msg/s, output %s (%d events)%n",
+        System.out.printf("%s: %d messages, %d triggers, %.1f ms, %.0f msg/s, %.2f cores, output %s (%d events)%n",
                 config.variant(), result.messages(), result.triggers(), result.elapsedNanos() / 1e6,
-                result.messagesPerSecond(), output.hex(), output.events());
+                result.messagesPerSecond(), (double) cpuNanos / result.elapsedNanos(), output.hex(), output.events());
         System.out.println(HistogramRecorder.summary("all", latency.all()));
         System.out.println(HistogramRecorder.summary("triggered", latency.triggered()));
         if (config.out() != null) {
@@ -81,6 +85,8 @@ public final class Main {
                     .put("warmup", config.warmup())
                     .put("warmup.passes", config.warmupPasses())
                     .put("pinning", Pinning.describe())
+                    .put("wait", config.waitStrategy())
+                    .put("cpu.ms", cpuNanos / 1e6)
                     .put("messages", result.messages())
                     .put("triggers", result.triggers())
                     .put("elapsed.ms", result.elapsedNanos() / 1e6)
@@ -109,7 +115,7 @@ public final class Main {
             case "ladder-book" -> (out, lat) ->
                     new AllocFreePipeline(capacity).run(feed, new Engine(new LadderBook(out)), rate, lat);
             case "spsc" -> (out, lat) ->
-                    new SpscPipeline(capacity).run(feed, new Engine(new LadderBook(out)), rate, lat);
+                    new SpscPipeline(capacity, config.waitStrategy()).run(feed, new Engine(new LadderBook(out)), rate, lat);
             default -> null;
         };
     }

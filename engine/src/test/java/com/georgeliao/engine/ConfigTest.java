@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.georgeliao.engine.pipeline.WaitStrategy;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,7 @@ class ConfigTest {
     @Test
     void parsesAllFlags() {
         Config c = Config.parse(new String[] {
-            "--variant", "spsc", "--feed", "feeds/burst.bin", "--rate", "500000", "--warmup", "1000", "--warmup-passes", "3", "--cpus", "2, 4", "--out", "out.hgrm"});
+            "--variant", "spsc", "--feed", "feeds/burst.bin", "--rate", "500000", "--warmup", "1000", "--warmup-passes", "3", "--cpus", "2, 4", "--wait", "park", "--out", "out.hgrm"});
         assertEquals("spsc", c.variant());
         assertEquals(Path.of("feeds/burst.bin"), c.feed());
         assertEquals(500_000, c.rate());
@@ -20,6 +21,7 @@ class ConfigTest {
         assertEquals(3, c.warmupPasses());
         assertEquals(2, c.readerCpu());
         assertEquals(4, c.engineCpu());
+        assertEquals(WaitStrategy.PARK, c.waitStrategy());
         assertEquals(Path.of("out.hgrm"), c.out());
     }
 
@@ -31,6 +33,7 @@ class ConfigTest {
         assertEquals(0, c.warmup());
         assertEquals(2, c.warmupPasses());
         assertEquals(-1, c.readerCpu());
+        assertEquals(WaitStrategy.SPIN, c.waitStrategy());
         assertNull(c.out());
     }
 
