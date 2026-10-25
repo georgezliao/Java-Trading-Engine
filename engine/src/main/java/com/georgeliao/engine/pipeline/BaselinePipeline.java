@@ -46,6 +46,7 @@ public final class BaselinePipeline {
 
         Thread consumer = new Thread(() -> {
             try {
+                Pinning.pinEngine();
                 long messages = 0;
                 long triggers = 0;
                 Message m;
@@ -66,6 +67,7 @@ public final class BaselinePipeline {
 
         Thread producer = new Thread(() -> {
             try {
+                Pinning.pinReader();
                 long i = 0;
                 while (frames.hasRemaining()) {
                     schedule.awaitSend(i++);

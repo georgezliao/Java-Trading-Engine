@@ -7,6 +7,7 @@ import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.AllocFreePipeline;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
 import com.georgeliao.engine.pipeline.LatencyRecorder;
+import com.georgeliao.engine.pipeline.Pinning;
 import com.georgeliao.engine.metrics.HistogramRecorder;
 import com.georgeliao.engine.metrics.RunMetadata;
 import com.georgeliao.engine.pipeline.RunResult;
@@ -43,6 +44,7 @@ public final class Main {
         }
         // Whole feed in memory before timing starts; no I/O on the hot path.
         ByteBuffer feed = ByteBuffer.wrap(Files.readAllBytes(config.feed())).order(ByteOrder.LITTLE_ENDIAN);
+        Pinning.configure(config.readerCpu(), config.engineCpu());
         Variant variant = variant(config, feed);
         if (variant == null) {
             System.err.println("unknown variant " + config.variant());
@@ -78,6 +80,7 @@ public final class Main {
                     .put("rate", config.rate())
                     .put("warmup", config.warmup())
                     .put("warmup.passes", config.warmupPasses())
+                    .put("pinning", Pinning.describe())
                     .put("messages", result.messages())
                     .put("triggers", result.triggers())
                     .put("elapsed.ms", result.elapsedNanos() / 1e6)

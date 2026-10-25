@@ -53,6 +53,7 @@ public final class AllocFreePipeline {
 
         Thread consumer = new Thread(() -> {
             try {
+                Pinning.pinEngine();
                 FrameView view = new FrameView();
                 long messages = 0;
                 long triggers = 0;
@@ -74,6 +75,7 @@ public final class AllocFreePipeline {
 
         Thread producer = new Thread(() -> {
             try {
+                Pinning.pinReader();
                 long i = 0;
                 for (int offset = start; offset + Codec.FRAME_SIZE <= end; offset += Codec.FRAME_SIZE) {
                     schedule.awaitSend(i);

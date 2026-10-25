@@ -44,6 +44,7 @@ public final class SpscPipeline {
         Thread engineThread = new Thread(consumer, "engine");
         Thread producer = new Thread(() -> {
             try {
+                Pinning.pinReader();
                 long i = 0;
                 for (int offset = start; offset + Codec.FRAME_SIZE <= end; offset += Codec.FRAME_SIZE) {
                     schedule.awaitSend(i++);
@@ -100,6 +101,7 @@ public final class SpscPipeline {
         @Override
         public void run() {
             try {
+                Pinning.pinEngine();
                 while (!done) {
                     if (ring.drain(this, BATCH) == 0) {
                         if (failure.get() != null) {
