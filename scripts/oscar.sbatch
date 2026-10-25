@@ -8,12 +8,27 @@
 # Headline measurement job for Brown's Oscar cluster. Every number in the README comes from this
 # script on one node type.
 #
-# On a login node (building is fine there, benchmarking is not):
-#   module load java/25 (or untar Temurin 25 into ~ and export JAVA_HOME)
-#   mvn -q -B package -DskipTests
-#   sinfo -o "%N %f"                     # pick ONE node feature
+# One-time setup on a login node (no root needed):
+#   module avail java maven                 # use the modules if there's a JDK 25, else:
+#   cd ~ && curl -L -o temurin25.tar.gz \
+#     "https://api.adoptium.net/v3/binary/latest/25/ga/linux/x64/jdk/hotspot/normal/eclipse"
+#   tar xzf temurin25.tar.gz && export JAVA_HOME=$(ls -d ~/jdk-25*) && export PATH=$JAVA_HOME/bin:$PATH
+#   (put the two exports in ~/.bashrc; batch jobs inherit them)
+#   Maven: module load maven, or untar apache-maven-3.9.x-bin.tar.gz into ~ the same way.
+#   Optional profiles: untar the async-profiler linux-x64 release into ~ and
+#   export ASYNC_PROFILER_HOME=~/async-profiler-<version>-linux-x64
+#
+# Every time (building on the login node is fine; benchmarking there is NOT: login nodes are
+# shared and noisy, and any number from them is meaningless):
+#   git pull && mvn -q -B package -DskipTests
+#   sinfo -o "%N %f"                     # pick ONE node feature and keep using it
 #   mkdir -p results
 #   sbatch --constraint=<feature> scripts/oscar.sbatch
+#   squeue -u $USER                      # then results/oscar/<jobid>/ and results/oscar-<jobid>.out
+#   python3 scripts/plot.py results/oscar/<jobid>
+#
+# For poking around, use an interactive allocation (interact / salloc), never the login node.
+# If --exclusive sits in the queue too long on the exploratory account, email support@ccv.brown.edu.
 #
 # What it does:
 #   - records lscpu, hostname, kernel, java -version, the Slurm job (incl. features), git sha
