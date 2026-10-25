@@ -10,6 +10,7 @@ import com.georgeliao.engine.pipeline.LatencyRecorder;
 import com.georgeliao.engine.metrics.HistogramRecorder;
 import com.georgeliao.engine.metrics.RunMetadata;
 import com.georgeliao.engine.pipeline.RunResult;
+import com.georgeliao.engine.pipeline.SpscPipeline;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -104,6 +105,8 @@ public final class Main {
                     new AllocFreePipeline(capacity).run(feed, new Engine(new PooledOrderBook(out)), rate, lat);
             case "ladder-book" -> (out, lat) ->
                     new AllocFreePipeline(capacity).run(feed, new Engine(new LadderBook(out)), rate, lat);
+            case "spsc" -> (out, lat) ->
+                    new SpscPipeline(capacity).run(feed, new Engine(new LadderBook(out)), rate, lat);
             default -> null;
         };
     }

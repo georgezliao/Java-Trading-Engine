@@ -10,6 +10,7 @@ import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.AllocFreePipeline;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
 import com.georgeliao.engine.pipeline.RunResult;
+import com.georgeliao.engine.pipeline.SpscPipeline;
 import com.georgeliao.engine.wire.Codec;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -85,5 +86,17 @@ class GoldenOutputTest {
         assertEquals(TRIGGERS, result.triggers());
         assertEquals(EVENTS, out.events());
         assertEquals(HASH, out.hash(), "got " + out.hex());
+    }
+
+    @Test
+    void spscPipelineMatchesGoldenHash() throws Exception {
+        for (int capacity : new int[] {2, 1024}) {
+            HashingListener out = new HashingListener();
+            RunResult result = new SpscPipeline(capacity).run(goldenFeed(), new Engine(new LadderBook(out)));
+            assertEquals(5000, result.messages());
+            assertEquals(TRIGGERS, result.triggers());
+            assertEquals(EVENTS, out.events());
+            assertEquals(HASH, out.hash(), "capacity " + capacity + " got " + out.hex());
+        }
     }
 }
