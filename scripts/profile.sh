@@ -21,7 +21,7 @@ ASPROF_EVENT=${ASPROF_EVENT:-alloc}
 . scripts/lib.sh
 
 RUN=$(new_run "profile-$VARIANT")
-ARGS=(--variant "$VARIANT" --feed "$FEED" --rate "$RATE" --warmup "$WARMUP")
+ARGS=(--variant "$VARIANT" --feed "$FEED" --rate "$RATE" --warmup "$WARMUP" $PIN)
 JFR_BIN="$(dirname "$JAVA")/jfr"
 
 echo "== JFR"

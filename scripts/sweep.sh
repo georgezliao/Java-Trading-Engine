@@ -10,6 +10,7 @@
 #   WARMUP      messages dropped per run        (default: 200000, after two full unmeasured replays)
 #   JVM_FLAGS   extra JVM flags                 (default: -Xms1g -Xmx1g -XX:+AlwaysPreTouch)
 #   OUT_ROOT    where run folders go            (default: results/local)
+#   CPUS        reader,engine CPUs to pin       (Linux only)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -32,6 +33,6 @@ for rate in $RATES; do
   echo "== $VARIANT @ $rate msg/s"
   # shellcheck disable=SC2086
   $JAVA $JVM_FLAGS -jar "$JAR" --variant "$VARIANT" --feed "$FEED" --rate "$rate" \
-    --warmup "$WARMUP" --out "$RUN/$VARIANT-$rate.hgrm" | tee "$RUN/$VARIANT-$rate.log"
+    --warmup "$WARMUP" $PIN --out "$RUN/$VARIANT-$rate.hgrm" | tee "$RUN/$VARIANT-$rate.log"
 done
 echo "results in $RUN"

@@ -21,6 +21,9 @@ if [ ! -f "$FEED" ]; then
   "$JAVA" -jar "$JAR" gen --profile burst --count "$FEED_COUNT" --seed 1 --out "$FEED"
 fi
 
+# CPUS="reader,engine" pins the two pipeline threads (Linux only; ignored on macOS).
+PIN=${CPUS:+--cpus $CPUS}
+
 # new_run <name>: make results/local/<timestamp>-<name>, record git + java, print the path.
 new_run() {
   local dir="${OUT_ROOT:-results/local}/$(date +%Y%m%d-%H%M%S)-$1"

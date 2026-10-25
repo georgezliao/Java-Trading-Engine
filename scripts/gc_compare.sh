@@ -38,7 +38,7 @@ for rep in $(seq 1 "$REPS"); do
     echo "== $name"
     # shellcheck disable=SC2046
     "$JAVA" $(gc_flag "$gc") -Xms"$HEAP" -Xmx"$HEAP" -XX:+AlwaysPreTouch \
-      -jar "$JAR" --variant "$VARIANT" --feed "$FEED" --rate "$RATE" --warmup "$WARMUP" \
+      -jar "$JAR" --variant "$VARIANT" --feed "$FEED" --rate "$RATE" --warmup "$WARMUP" $PIN \
       --out "$RUN/$name.hgrm" | tee "$RUN/$name.log"
   done
 done
