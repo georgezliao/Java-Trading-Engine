@@ -42,6 +42,7 @@ public final class BaselinePipeline {
         BlockingQueue<Message> queue = new ArrayBlockingQueue<>(capacity);
         ByteBuffer frames = feed.duplicate().order(feed.order());
         AtomicReference<Throwable> failure = new AtomicReference<>();
+        boolean timeService = recorder.wantsServiceTime();
         long[] counts = new long[2];
 
         Thread consumer = new Thread(() -> {
@@ -51,8 +52,16 @@ public final class BaselinePipeline {
                 long triggers = 0;
                 Message m;
                 while ((m = queue.take()) != END) {
-                    boolean triggered = engine.onMessage(m);
-                    recorder.record(messages, System.nanoTime() - schedule.intendedNanos(messages), triggered);
+                    boolean triggered;
+                    if (timeService) {
+                        long t0 = System.nanoTime();
+                        triggered = engine.onMessage(m);
+                        long t1 = System.nanoTime();
+                        recorder.recordWithService(messages, t1 - schedule.intendedNanos(messages), t1 - t0, triggered);
+                    } else {
+                        triggered = engine.onMessage(m);
+                        recorder.record(messages, System.nanoTime() - schedule.intendedNanos(messages), triggered);
+                    }
                     messages++;
                     if (triggered) {
                         triggers++;

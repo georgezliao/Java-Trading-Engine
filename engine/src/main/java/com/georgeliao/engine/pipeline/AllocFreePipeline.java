@@ -49,6 +49,7 @@ public final class AllocFreePipeline {
         int start = feed.position();
         int end = feed.limit();
         AtomicReference<Throwable> failure = new AtomicReference<>();
+        boolean timeService = recorder.wantsServiceTime();
         long[] counts = new long[2];
 
         Thread consumer = new Thread(() -> {
@@ -59,8 +60,16 @@ public final class AllocFreePipeline {
                 long triggers = 0;
                 Slot s;
                 while ((s = queue.take()) != END) {
-                    boolean triggered = engine.onFrame(view.wrap(feed, s.offset));
-                    recorder.record(messages, System.nanoTime() - schedule.intendedNanos(messages), triggered);
+                    boolean triggered;
+                    if (timeService) {
+                        long t0 = System.nanoTime();
+                        triggered = engine.onFrame(view.wrap(feed, s.offset));
+                        long t1 = System.nanoTime();
+                        recorder.recordWithService(messages, t1 - schedule.intendedNanos(messages), t1 - t0, triggered);
+                    } else {
+                        triggered = engine.onFrame(view.wrap(feed, s.offset));
+                        recorder.record(messages, System.nanoTime() - schedule.intendedNanos(messages), triggered);
+                    }
                     messages++;
                     if (triggered) {
                         triggers++;

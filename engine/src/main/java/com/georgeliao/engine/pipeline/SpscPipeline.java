@@ -91,6 +91,7 @@ public final class SpscPipeline {
         private final WaitStrategy wait;
         private final AtomicReference<Throwable> failure;
         private final FrameView view = new FrameView();
+        private final boolean timeService;
         private boolean done;
         long messages;
         long triggers;
@@ -104,6 +105,7 @@ public final class SpscPipeline {
             this.schedule = schedule;
             this.wait = wait;
             this.failure = failure;
+            this.timeService = recorder.wantsServiceTime();
         }
 
         @Override
@@ -129,8 +131,16 @@ public final class SpscPipeline {
                 done = true;
                 return;
             }
-            boolean triggered = engine.onFrame(view.wrap(feed, offset));
-            recorder.record(messages, System.nanoTime() - schedule.intendedNanos(messages), triggered);
+            boolean triggered;
+            if (timeService) {
+                long t0 = System.nanoTime();
+                triggered = engine.onFrame(view.wrap(feed, offset));
+                long t1 = System.nanoTime();
+                recorder.recordWithService(messages, t1 - schedule.intendedNanos(messages), t1 - t0, triggered);
+            } else {
+                triggered = engine.onFrame(view.wrap(feed, offset));
+                recorder.record(messages, System.nanoTime() - schedule.intendedNanos(messages), triggered);
+            }
             messages++;
             if (triggered) {
                 triggers++;
