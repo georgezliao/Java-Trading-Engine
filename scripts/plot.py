@@ -2,6 +2,11 @@
 """Percentile plot and latency-vs-throughput table from sweep folders.
 
     python3 scripts/plot.py results/local/<run> [more run folders...] [--out DIR]
+    python3 scripts/plot.py results/oscar/<jobid> --summary
+
+--summary groups repeated runs (names ending in -r<N>) by config and rate and reports the
+median across reps, the p99.9 range, a p99.9-vs-rate plot and a percentile plot at --rate
+using each config's median-p99.9 rep.
 
 Reads only the .hgrm/.meta files the engine writes (values in microseconds). Writes
 percentiles.png and latency_vs_throughput.md to --out (default: the first run folder) and
@@ -97,16 +102,70 @@ def plot(rs, out):
     fig.savefig(out, dpi=150)
 
 
+def summarize(rs, out, plot_rate):
+    import statistics as st
+    groups = {}
+    for r in rs:
+        config = re.sub(r"-\d+-r\d+$", "", r["name"])
+        groups.setdefault((config, r["rate"]), []).append(r)
+    head = ["config", "rate", "reps", "p50 us", "p99 us", "p99.9 us", "p99.9 range", "max us", "behind"]
+    lines = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
+    by_config = {}
+    for (config, rate), runs in sorted(groups.items()):
+        med = lambda p: st.median(at(r["rows"], p) for r in runs)
+        p999 = sorted(at(r["rows"], 99.9) for r in runs)
+        # A run "fell behind" if it delivered under 99% of the target rate.
+        behind = sum(1 for r in runs if "achieved.rate" in r["meta"]
+                     and int(r["meta"]["achieved.rate"]) < 0.99 * rate)
+        lines.append("| " + " | ".join([
+            config, f"{rate:,}", str(len(runs)), fmt(med(50)), fmt(med(99)), fmt(med(99.9)),
+            f"{fmt(p999[0])} - {fmt(p999[-1])}", fmt(st.median(r["max"] for r in runs)), str(behind)]) + " |")
+        by_config.setdefault(config, []).append((rate, med(99.9), runs))
+    md = "\n".join(lines) + "\n"
+    (out / "summary.md").write_text(md)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for config, pts in sorted(by_config.items()):
+        pts.sort()
+        ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", label=config, linewidth=1.2)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("target rate (msg/s)")
+    ax.set_ylabel("p99.9 latency (us), median of reps")
+    ax.grid(True, which="major", alpha=0.3)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(out / "p999_vs_rate.png", dpi=150)
+
+    reps = []
+    for config, pts in sorted(by_config.items()):
+        for rate, _, runs in pts:
+            if rate == plot_rate:
+                runs = sorted(runs, key=lambda r: at(r["rows"], 99.9))
+                rep = dict(runs[len(runs) // 2])
+                rep["name"] = config
+                reps.append(rep)
+    if reps:
+        plot(reps, out / f"percentiles_{plot_rate}.png")
+    return md
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("folders", nargs="+")
     ap.add_argument("--out")
+    ap.add_argument("--summary", action="store_true")
+    ap.add_argument("--rate", type=int, default=1_000_000, help="rate for the --summary percentile plot")
     a = ap.parse_args()
     rs = sorted(runs(a.folders), key=lambda r: (r["variant"], r["rate"], r["name"]))
     if not rs:
         raise SystemExit("no .hgrm files found")
     out = Path(a.out or a.folders[0])
     out.mkdir(parents=True, exist_ok=True)
+    if a.summary:
+        print(summarize(rs, out, a.rate))
+        print(f"wrote summary.md, p999_vs_rate.png, percentiles_{a.rate}.png to {out}")
+        return
     md = table(rs)
     (out / "latency_vs_throughput.md").write_text(md)
     plot(rs, out / "percentiles.png")
