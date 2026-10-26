@@ -39,7 +39,7 @@
 #     to those three
 #   - interleaves every config within each rep (A B C ... A B C ...) over RATES x REPS
 #   - one async-profiler pass per profiled variant (itimer CPU, alloc), since perf events are
-#     usually locked down here, plus one Epsilon run
+#     usually locked down here, plus Epsilon runs (spsc must survive 128 MB)
 #   - copies everything to results/oscar/<jobid>/ at the end, or on failure
 #
 # Without Slurm (e.g. a laptop) it runs as a smoke test: no taskset, no topology, small feed.
@@ -174,10 +174,12 @@ else
   echo "ASYNC_PROFILER_HOME not set: skipping profiles"
 fi
 
-# --- Epsilon: alloc-free must survive a small no-GC heap --------------------------
-echo "== epsilon alloc-free"
-${TASKSET[@]+"${TASKSET[@]}"} "$JAVA" -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -Xms128m -Xmx128m -Xlog:gc \
-  -jar "$JAR" --variant alloc-free --feed "$FEED" --rate 1000000 --warmup "$WARMUP" \
-  > "$WORK/epsilon-alloc-free.log" 2>&1 && echo "   survived" || echo "   ran out of memory (see log)"
+# --- Epsilon: spsc must survive a small no-GC heap; the others are for contrast ------------
+for v in spsc alloc-free baseline; do
+  echo "== epsilon $v"
+  ${TASKSET[@]+"${TASKSET[@]}"} "$JAVA" -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -Xms128m -Xmx128m -Xlog:gc \
+    -jar "$JAR" --variant "$v" --feed "$FEED" --rate 1000000 --warmup "$WARMUP" $(pin "$READER" "$ENGINE") \
+    > "$WORK/epsilon-$v.log" 2>&1 && echo "   survived" || echo "   ran out of memory (see log)"
+done
 
 rm -f "$FEED"
