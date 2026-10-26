@@ -41,7 +41,7 @@ All books implement `Book` and share one set of contract tests. `PooledOrderBook
 
 `GoldenOutputTest` replays a committed 5,000-message feed (`engine/src/test/resources/feeds/golden-burst-5k.bin`) through every variant and checks the output hash, event count and trigger count. If engine behavior changes on purpose, the constants in that test change in their own commit.
 
-`AllocationTest` measures bytes allocated by the engine thread over 300k warm messages for the pooled and ladder paths. `scripts/epsilon_proof.sh` runs `alloc-free` under Epsilon GC with a 128 MB heap, where nothing is ever freed, and checks it still matches the baseline hash.
+`AllocationTest` measures bytes allocated by the engine thread over 300k warm messages for the pooled and ladder paths. `scripts/epsilon_proof.sh` runs `spsc` under Epsilon GC with a 128 MB heap, where nothing is ever freed, and checks it still matches the baseline hash. `alloc-free` doesn't reliably pass the same check because `ArrayBlockingQueue` allocates a node each time the engine thread waits.
 
 ## Scripts
 
@@ -56,11 +56,29 @@ All books implement `Book` and share one set of contract tests. `PooledOrderBook
 
 JMH benchmarks are in `benchmarks/`: `DecodeBench` (allocation of the decode step), `HandoffBench` (cross-thread handoff cost for `ArrayBlockingQueue`, both in-house rings, Agrona `OneToOneRingBuffer` and the Disruptor), and `LayoutDump` (JOL object layouts). Run them with `java -jar benchmarks/target/benchmarks.jar <name>`.
 
-## Measurement environment
+## Results
 
-Reported numbers come from `scripts/oscar.sbatch` on an exclusive Oscar `48core` node (Intel Cascade Lake). The job picks two physical cores on one socket for the reader and engine threads and a third for JVM housekeeping, restricts the JVM to them with `taskset`, and interleaves all configurations within each of 5 repetitions. Results are not in yet.
+From Oscar job 7913307: an exclusive `48core` node (2x Intel Xeon Platinum 8268, 24 cores per socket, no SMT), JDK 25.0.2, G1 with a 1 GB heap unless noted, reader and engine pinned to cores 2 and 3, JVM housekeeping on core 1. Each configuration ran 5 times at each rate, interleaved, on a 2M-message burst feed with two warmup replays and the first 200k measured messages dropped. Latency is from each message's scheduled send time to the end of processing. Values are the median across the 5 runs.
 
-On Oscar there is no control over `isolcpus`, `nohz_full`, the frequency governor or turbo. Development runs on macOS are not comparable: macOS has no thread pinning and moves threads between performance and efficiency cores.
+| Config | p50 @ 1M/s | p99 @ 1M/s | p99.9 @ 1M/s | max @ 1M/s | Keeps up at 2M/s |
+|---|---|---|---|---|---|
+| `baseline` | 3.1 µs | 10.0 µs | 14.5 µs | 513 µs | 0 of 5 runs |
+| `baseline` + ZGC | 3.3 µs | 10.7 µs | 95.4 µs | 572 µs | 0 of 5 |
+| `alloc-free` | 3.1 µs | 9.8 µs | 12.7 µs | 77 µs | 1 of 5 |
+| `ladder-book` | 3.0 µs | 9.4 µs | 11.7 µs | 38 µs | 1 of 5 |
+| `spsc`, spin | 0.3 µs | 0.5 µs | 2.2 µs | 25 µs | 5 of 5 |
+| `spsc`, yield | 0.4 µs | 0.8 µs | 2.6 µs | 28 µs | 5 of 5 |
+| `spsc`, park | 26.8 µs | 53.9 µs | 54.4 µs | 62 µs | 5 of 5 |
+
+"Keeps up" means the run delivered at least 99% of the target rate. When a run falls behind, the queue grows and latency goes to tens of milliseconds. The full table for all three rates (250k, 1M, 2M msg/s) with the p99.9 range across runs is in [`results/oscar/7913307/summary.md`](results/oscar/7913307/summary.md).
+
+![p99.9 vs rate](results/oscar/7913307/p999_vs_rate.png)
+
+![Latency percentiles at 1M msg/s](results/oscar/7913307/percentiles_1000000.png)
+
+The percentile plot uses the run with the median p99.9 for each configuration. [docs/findings.md](docs/findings.md) goes through what these numbers do and don't show.
+
+The job script is `scripts/oscar.sbatch`; `.meta` files next to each histogram record the exact JVM flags, pinning and output hash. On Oscar there is no control over `isolcpus`, `nohz_full`, the frequency governor or turbo. `taskset` keeps the JVM on cores 1 to 3, but only the reader and engine threads are pinned to a single core each, so GC and JIT threads can still run on cores 2 and 3. Development runs on macOS aren't comparable to these: macOS has no thread pinning and moves threads between core types.
 
 The Dockerfile builds and runs the engine anywhere (`docker build -t trading-engine . && docker run --rm trading-engine`). It hasn't been built yet, and container timings aren't used.
 
@@ -69,4 +87,5 @@ The Dockerfile builds and runs the engine anywhere (`docker build -t trading-eng
 - One instrument and one toy strategy. The book handles price-time priority, partial fills and cancels, nothing else.
 - The feed carries no timestamps. The `burst` profile changes message content (bigger price moves, more orders and cancels), not arrival timing.
 - The reader thread busy-spins until each message is due, so process CPU time is at least one core regardless of wait strategy.
-- Thread pinning uses OpenHFT affinity and does nothing on macOS. The Linux path hasn't been checked yet.
+- Thread pinning uses OpenHFT affinity and does nothing on macOS. On Linux, each run's `.meta` file shows the CPU each thread actually ran on.
+- The hyperthread-sibling configuration in `scripts/oscar.sbatch` needs a node with SMT; the `48core` nodes have none, so it hasn't run.
