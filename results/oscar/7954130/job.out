@@ -1,0 +1,70 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 7954130
+##  Job Name : trading-tails
+##  Nodelist : node1920
+##      CPUs : 
+##   Mem/CPU : 2800 MB
+## Directory : /oscar/home/gzliao/Java-Trading-Engine
+##   Job Started : Mon Oct 26 01:19:02 AM EDT 2026
+###############################################################################
+== rep 1  baseline @ 1000000  (plain)
+all       n=1800000 p50=3.0us p99=9.9us p99.9=14.8us p99.99=394.0us max=528.4us
+== rep 1  spsc-spin @ 1000000  (plain)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.5us p99.99=4.0us max=23.7us
+== rep 1  spsc-spin @ 2000000  (plain)
+all       n=1800000 p50=0.2us p99=0.4us p99.9=2.3us p99.99=3.4us max=24.1us
+== rep 1  baseline @ 1000000  (outliers)
+all       n=1800000 p50=3.1us p99=9.8us p99.9=15.7us p99.99=400.9us max=523.3us
+wrote 1246 outliers to /tmp/trading-tails-7954130/baseline-1000000-outliers-r1.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/baseline-1000000-outliers-r1.hgrm, /tmp/trading-tails-7954130/baseline-1000000-outliers-r1-triggered.hgrm, /tmp/trading-tails-7954130/baseline-1000000-outliers-r1.meta
+== rep 1  spsc-spin @ 1000000  (outliers)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.0us p99.99=3.2us max=24.0us
+wrote 4221 outliers to /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r1.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r1.hgrm, /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r1-triggered.hgrm, /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r1.meta
+== rep 1  spsc-spin @ 2000000  (outliers)
+all       n=1800000 p50=0.2us p99=0.5us p99.9=2.4us p99.99=3.6us max=18.2us
+wrote 5538 outliers to /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r1.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r1.hgrm, /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r1-triggered.hgrm, /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r1.meta
+== rep 2  baseline @ 1000000  (plain)
+all       n=1800000 p50=3.0us p99=9.7us p99.9=14.9us p99.99=390.1us max=522.8us
+== rep 2  spsc-spin @ 1000000  (plain)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.4us p99.99=3.9us max=23.9us
+== rep 2  spsc-spin @ 2000000  (plain)
+all       n=1800000 p50=0.2us p99=0.4us p99.9=2.1us p99.99=3.0us max=11.1us
+== rep 2  baseline @ 1000000  (outliers)
+all       n=1800000 p50=3.0us p99=9.7us p99.9=14.7us p99.99=400.6us max=523.0us
+wrote 1200 outliers to /tmp/trading-tails-7954130/baseline-1000000-outliers-r2.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/baseline-1000000-outliers-r2.hgrm, /tmp/trading-tails-7954130/baseline-1000000-outliers-r2-triggered.hgrm, /tmp/trading-tails-7954130/baseline-1000000-outliers-r2.meta
+== rep 2  spsc-spin @ 1000000  (outliers)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.6us p99.99=3.5us max=23.9us
+wrote 4674 outliers to /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r2.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r2.hgrm, /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r2-triggered.hgrm, /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r2.meta
+== rep 2  spsc-spin @ 2000000  (outliers)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.3us p99.99=5.0us max=24.4us
+wrote 5504 outliers to /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r2.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r2.hgrm, /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r2-triggered.hgrm, /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r2.meta
+== rep 3  baseline @ 1000000  (plain)
+all       n=1800000 p50=3.0us p99=9.6us p99.9=14.5us p99.99=382.5us max=518.4us
+== rep 3  spsc-spin @ 1000000  (plain)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.0us p99.99=2.9us max=23.1us
+== rep 3  spsc-spin @ 2000000  (plain)
+all       n=1800000 p50=0.2us p99=0.5us p99.9=2.3us p99.99=3.2us max=12.6us
+== rep 3  baseline @ 1000000  (outliers)
+all       n=1800000 p50=3.1us p99=9.7us p99.9=64.0us p99.99=399.1us max=519.4us
+wrote 1900 outliers to /tmp/trading-tails-7954130/baseline-1000000-outliers-r3.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/baseline-1000000-outliers-r3.hgrm, /tmp/trading-tails-7954130/baseline-1000000-outliers-r3-triggered.hgrm, /tmp/trading-tails-7954130/baseline-1000000-outliers-r3.meta
+== rep 3  spsc-spin @ 1000000  (outliers)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.6us p99.99=4.5us max=26.4us
+wrote 4862 outliers to /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r3.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r3.hgrm, /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r3-triggered.hgrm, /tmp/trading-tails-7954130/spsc-spin-1000000-outliers-r3.meta
+== rep 3  spsc-spin @ 2000000  (outliers)
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.3us p99.99=3.8us max=19.3us
+wrote 5395 outliers to /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r3.csv (0 more not stored)
+wrote /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r3.hgrm, /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r3-triggered.hgrm, /tmp/trading-tails-7954130/spsc-spin-2000000-outliers-r3.meta
+== async-profiler: HashMap.resize calls over 20 us, baseline @ 1M
+baseline: 2000000 messages, 272110 triggers, 2000.1 ms, 999958 msg/s, 1.61 cores, output 267f6f3118b59791 (1373364 events)
+all       n=1800000 p50=3.0us p99=315.4us p99.9=4571.1us p99.99=5259.3us max=5283.8us
+triggered n=245052 p50=3.1us p99=304.1us p99.9=4665.3us p99.99=5275.6us max=5283.8us
+19
+engine cpu: 3
+results in /oscar/home/gzliao/Java-Trading-Engine/results/oscar/7954130

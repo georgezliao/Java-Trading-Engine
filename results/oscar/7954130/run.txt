@@ -1,0 +1,3 @@
+host=node1920.oscar.ccv.brown.edu
+kernel=Linux 5.14.0-570.62.1.0.1.el9_6.x86_64 x86_64
+git=e95d0f1

@@ -1,0 +1,342 @@
+jdk.MethodTrace {
+  startTime = 05:20:40.962 (2026-10-26)
+  duration = 0.0294 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:40.972 (2026-10-26)
+  duration = 0.0353 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:40.983 (2026-10-26)
+  duration = 0.0680 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:41.006 (2026-10-26)
+  duration = 0.135 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:41.084 (2026-10-26)
+  duration = 0.116 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:41.254 (2026-10-26)
+  duration = 0.226 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:41.389 (2026-10-26)
+  duration = 0.446 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:42.259 (2026-10-26)
+  duration = 0.918 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 22)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:42.687 (2026-10-26)
+  duration = 0.0273 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 28)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:42.707 (2026-10-26)
+  duration = 0.137 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 28)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:42.820 (2026-10-26)
+  duration = 0.109 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 28)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:43.007 (2026-10-26)
+  duration = 0.214 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 28)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:43.275 (2026-10-26)
+  duration = 0.261 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 28)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:44.289 (2026-10-26)
+  duration = 0.525 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 28)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:44.722 (2026-10-26)
+  duration = 0.0304 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 30)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:44.835 (2026-10-26)
+  duration = 0.0586 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 30)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(long) line: 54
+    com.georgeliao.engine.strategy.ThresholdStrategy.onTick(Message$Tick) line: 35
+    com.georgeliao.engine.Engine.onMessage(Message) line: 41
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:45.040 (2026-10-26)
+  duration = 0.123 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 30)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:45.308 (2026-10-26)
+  duration = 0.234 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 30)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
+jdk.MethodTrace {
+  startTime = 05:20:46.322 (2026-10-26)
+  duration = 0.472 ms
+  method = N/A
+  eventThread = "engine" (javaThreadId = 30)
+  stackTrace = [
+    java.util.HashMap.resize() line: 755
+    java.util.HashMap.putVal(int, Object, Object, boolean, boolean) line: 670
+    java.util.HashMap.put(Object, Object) line: 619
+    com.georgeliao.engine.book.OrderBook.add(long, Side, long, int) line: 62
+    com.georgeliao.engine.Engine.onMessage(Message) line: 34
+    com.georgeliao.engine.pipeline.BaselinePipeline.lambda$run$0(BlockingQueue, boolean, Engine, LatencyRecorder, Schedule, long[], AtomicReference) line: 62
+    com.georgeliao.engine.pipeline.BaselinePipeline$$Lambda.0x000000001c045ac0.run() line: 0
+    java.lang.Thread.runWith(Object, Runnable) line: 1487
+    ...
+  ]
+}
+
