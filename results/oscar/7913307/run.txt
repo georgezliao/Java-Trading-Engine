@@ -1,0 +1,8 @@
+host=node1938.oscar.ccv.brown.edu
+kernel=Linux 5.14.0-570.62.1.0.1.el9_6.x86_64 x86_64
+git=e95d0f1
+reps=5
+rates=250000 1000000 2000000
+count=2000000
+warmup=200000
+heap=1g

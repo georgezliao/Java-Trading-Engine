@@ -1,0 +1,1 @@
+kernel imgurl=http://172.20.0.12:80//install/netboot/ol9.6/x86_64/compute/rootimg.tar.gz XCAT=172.20.0.12:3001 NODE=node1938 FC=0 XCATHTTPPORT=80 console=tty0 console=ttyS1,115200 BOOTIF=01-3c-ec-ef-8a-5f-86 initrd=initrd

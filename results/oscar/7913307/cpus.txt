@@ -1,0 +1,4 @@
+housekeeping=1 reader=2 engine=3 reader_ht_sibling=none
+cpu1 siblings=1
+cpu2 siblings=2
+cpu3 siblings=3
