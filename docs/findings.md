@@ -6,19 +6,41 @@ Notes from building and measuring the variants. The first section is from the pi
 
 Pinning changed the picture more than any of the variants did. On the Mac the `ArrayBlockingQueue` variants had p99.9 anywhere from 1 to 40 ms. Pinned on Oscar at 1M msg/s, all three sit between 11.7 and 14.5 µs p99.9 (median of 5 runs), and the spread across runs is a couple of µs. So most of what I was fighting on the Mac was the OS scheduler, not the engine.
 
-Below p99.9 the three `ArrayBlockingQueue` variants are close to identical: p50 3.0 to 3.1 µs, p99 9.4 to 10.0 µs at 1M msg/s. Their medians are dominated by the handoff, since every message wakes the engine thread through the queue's lock. The differences show up past p99.9. In the percentile plot `baseline` climbs to about 500 µs, `alloc-free` to about 75 µs and `ladder-book` stays near 30 µs. `baseline` had zero GCs in those runs, so its far tail isn't a collection. My guess is a resize inside the boxed `HashMap` or `TreeMap`, which costs time proportional to the number of entries, but I haven't profiled it.
+Below p99.9 the three `ArrayBlockingQueue` variants are close to identical: p50 3.0 to 3.1 µs, p99 9.4 to 10.0 µs at 1M msg/s. Their medians are dominated by the handoff, since every message wakes the engine thread through the queue's lock. The differences show up past p99.9. In the percentile plot `baseline` climbs to about 500 µs, `alloc-free` to about 75 µs and `ladder-book` stays near 30 µs. Where `baseline`'s 500 µs comes from is traced in the next section.
 
 At 250k msg/s `baseline` did one G1 young collection per run and its max went to 4.4 ms, while at 1M msg/s it did none. It's the same feed, so the lower rate must allocate more in total. That fits `ArrayBlockingQueue` allocating a node every time the engine thread waits, since at 250k msg/s it waits on almost every message. This is an inference from the GC counts, not something I measured directly.
 
 None of the `ArrayBlockingQueue` variants reliably keep up at 2M msg/s. `baseline` fell behind in all 5 runs, `alloc-free` and `ladder-book` in 4 of 5. Once the queue backs up, latency goes to tens of milliseconds. The knee is somewhere between 1M and 2M msg/s on this hardware and I didn't sweep finer than that.
 
-The `spsc` ring with a spinning consumer is the clear change: p50 0.3 µs, p99 0.5 µs, p99.9 2.2 µs, and it keeps up at 2M msg/s in every run with the same p99.9. Max latency across a 1.8M-message measured window was about 25 µs. There is a step in its percentile curve near p99.8, from about 0.7 µs to 2 µs, that I can't explain yet. Triggering ticks do more work (the strategy sends an order into the book), so they're one candidate.
+The `spsc` ring with a spinning consumer is the clear change: p50 0.3 µs, p99 0.5 µs, p99.9 2.2 µs, and it keeps up at 2M msg/s in every run with the same p99.9. Max latency across a 1.8M-message measured window was about 25 µs. Its percentile curve has a step near p99.8, from about 0.7 µs to 2 µs, which also gets its own section below.
 
 `--wait yield` behaves almost exactly like spin and uses the same 2.0 cores. On a dedicated core there's nothing else to run, so `Thread.yield()` returns immediately. `--wait park` has p50 27 µs and p99.9 54.5 µs at every rate, with almost no spread. `LockSupport.parkNanos(1000)` asks for 1 µs, but the sleep actually lasts about 50 µs, which matches Linux's default timer slack. Park drops CPU to about 1.1 cores, the remainder being the reader spinning on its schedule.
 
 ZGC made `baseline` worse: p99.9 95 µs against 14.5 µs with G1 at 1M msg/s, and 247 µs against 11 µs at 250k. ZGC ran 18 collection cycles per run at 250k and 6 at 1M. `taskset` limits the JVM to three cores and only the reader and engine are pinned individually, so ZGC's concurrent threads can land on the same cores as them. That's my best explanation; I haven't checked where the GC threads actually ran.
 
 The hyperthread-sibling experiment didn't run because these nodes have SMT turned off.
+
+## Tracing the two tails (Oscar job 7954130)
+
+For this follow-up the engine got an `--outliers` mode that logs, for every message over a latency threshold, both its end-to-end latency and how long the engine itself spent processing it (`OutlierRecorder`). The feed is deterministic, so `engine annotate` can rebuild the book at any position afterwards. The job ran each configuration 3 times with and 3 times without the logging, interleaved, plus safepoint logging, `/proc/interrupts` snapshots before and after every run, and one run with async-profiler tracing `HashMap.resize` calls slower than 20 µs. Runs with and without the logging had the same p50, p99 and max, so the extra `System.nanoTime()` per message didn't change the picture.
+
+**`baseline`'s ~500 µs maximum is `HashMap` resizing.** The baseline book keeps an id index in a `java.util.HashMap<Long, Order>`, which doubles its table when it passes 75% load. Replaying the feed offline, the table resizes inside the measured window at messages 347,823, 615,713 and 1,629,898. In all three runs those were exactly the messages with large engine processing time:
+
+| Feed position | Entries rehashed | Engine time on that message (3 runs) |
+|---|---|---|
+| 347,823 | 6,145 | 129 to 131 µs |
+| 615,713 | 12,289 | 256 to 264 µs |
+| 1,629,898 | 24,577 | 507 to 514 µs |
+
+The cost doubles with the table, roughly 21 µs per thousand entries, and the last resize is the run's maximum. Messages that arrive during a resize queue behind it, which is what fills in `baseline`'s p99.99 (about 390 µs). The async-profiler trace shows the same calls on the engine thread under `OrderBook.add` → `HashMap.put` → `HashMap.resize`. They took up to 0.9 ms there, but tracing adds its own overhead. There were no safepoints in the measured window; the two G1 pauses in each baseline run happened during the warmup replays. The pooled and ladder books pre-size their Agrona id maps for 65,536 orders, so their id index never resizes on this feed (it peaks around 28k resting orders), which fits their much lower maximums.
+
+**The `spsc` step near p99.8 is the kernel's timer interrupt.** I first guessed it was messages queueing behind an occasionally expensive message, because slow messages per second grew faster than the rate. That turned out to be wrong. With the per-message processing time logged, almost none of the slow messages were expensive themselves or queued behind an expensive one: in five of the six runs 3,860 to 4,164 slow messages (over 1.5 µs) per run had neither explanation. There were no safepoints at all during the `spsc` runs.
+
+`/proc/interrupts` showed about 6,200 local timer interrupts (`LOC`) on each of the reader and engine cores per run at 1M msg/s, and about 3,200 at 2M msg/s, both roughly 1,000 per second per core. The kernel is built with `CONFIG_HZ=1000`. The measured window at 1M msg/s is 1.8 s, so about 1,800 ticks hit each core, 3,600 in total, which is 0.2% of 1.8M messages. That's where the step is. Each interrupt costs about 1.5 to 2 µs: the median latency of the slow messages was 2.0 µs and p90 2.7 µs. At 2M msg/s messages are 0.5 µs apart, so each tick delays about two of them, which is why the slow count per second grew with the rate. At 250k msg/s, messages are 4 µs apart and a tick usually lands while the engine is idle, so few messages cross the 1.5 µs threshold at all.
+
+In one of the six runs, 588 messages did have engine processing times over 1 µs (median 2.5 µs). They were spaced in exact multiples of 1,000 messages, which at 1M msg/s is the 1 ms tick period. The send schedule and the timer are both periodic, so their relative phase stays fixed for a whole run. In that run the tick kept landing while a message was being processed, and in the others it landed between messages.
+
+`nohz_full` on the reader and engine cores would stop most of these ticks, but that needs a kernel boot parameter and isn't available on Oscar.
 
 ## The baseline tail wasn't GC
 

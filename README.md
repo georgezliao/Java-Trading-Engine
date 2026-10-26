@@ -16,7 +16,7 @@ java -jar engine/target/engine.jar --variant spsc --feed feeds/burst.bin --rate 
 
 The last command prints throughput, the output hash, and p50/p99/p99.9/p99.99/max latency, and writes `run/spsc.hgrm`, `run/spsc-triggered.hgrm` and `run/spsc.meta`.
 
-Other options: `--warmup-passes N` (default 2), `--cpus reader,engine` to pin the two threads (Linux only), `--wait spin|yield|park` for the `spsc` consumer.
+Other options: `--warmup-passes N` (default 2), `--cpus reader,engine` to pin the two threads (Linux only), `--wait spin|yield|park` for the `spsc` consumer, and `--outliers file.csv` to log individual slow messages with the engine's own processing time. `engine annotate` replays a feed and reports the book state at the logged positions.
 
 ## Variants
 
@@ -53,6 +53,7 @@ All books implement `Book` and share one set of contract tests. `PooledOrderBook
 | `scripts/epsilon_proof.sh` | allocation check described above |
 | `scripts/plot.py <run dirs>` | percentile plot and latency-vs-throughput table from `.hgrm` files |
 | `scripts/oscar.sbatch` | the measurement job for Brown's Oscar cluster |
+| `scripts/oscar_profile.sbatch` | follow-up job: outlier logs, safepoints, interrupt counts, `HashMap.resize` trace |
 
 JMH benchmarks are in `benchmarks/`: `DecodeBench` (allocation of the decode step), `HandoffBench` (cross-thread handoff cost for `ArrayBlockingQueue`, both in-house rings, Agrona `OneToOneRingBuffer` and the Disruptor), and `LayoutDump` (JOL object layouts). Run them with `java -jar benchmarks/target/benchmarks.jar <name>`.
 
@@ -76,7 +77,7 @@ From Oscar job 7913307: an exclusive `48core` node (2x Intel Xeon Platinum 8268,
 
 ![Latency percentiles at 1M msg/s](results/oscar/7913307/percentiles_1000000.png)
 
-The percentile plot uses the run with the median p99.9 for each configuration. [docs/findings.md](docs/findings.md) goes through what these numbers do and don't show.
+The percentile plot uses the run with the median p99.9 for each configuration. Two features of it are traced in [docs/findings.md](docs/findings.md): `baseline`'s ~500 µs maximum is a `java.util.HashMap` resize in the order book's id index, and the step in the `spsc` curves near p99.8 is the kernel's 1,000 Hz timer interrupt on the reader and engine cores. The follow-up job is `scripts/oscar_profile.sbatch` and its output is in `results/oscar/7954130/`.
 
 The job script is `scripts/oscar.sbatch`; `.meta` files next to each histogram record the exact JVM flags, pinning and output hash. On Oscar there is no control over `isolcpus`, `nohz_full`, the frequency governor or turbo. `taskset` keeps the JVM on cores 1 to 3, but only the reader and engine threads are pinned to a single core each, so GC and JIT threads can still run on cores 2 and 3. Development runs on macOS aren't comparable to these: macOS has no thread pinning and moves threads between core types.
 
