@@ -4,7 +4,7 @@ Notes from building and measuring the variants. The first section is from the pi
 
 ## Oscar: what pinning showed
 
-Pinning changed the picture more than any of the variants did. On the Mac the `ArrayBlockingQueue` variants had p99.9 anywhere from 1 to 40 ms. Pinned on Oscar at 1M msg/s, all three sit between 11.7 and 14.5 µs p99.9 (median of 5 runs), and the spread across runs is a couple of µs. So most of what I was fighting on the Mac was the OS scheduler, not the engine.
+On the Mac the `ArrayBlockingQueue` variants had p99.9 anywhere from 1 to 40 ms. Pinned on Oscar at 1M msg/s, all three sit between 11.7 and 14.5 µs p99.9 (median of 5 runs), and the spread across runs is a couple of µs. The engine code is the same in both places, so I think most of the Mac tail came from macOS moving the threads around. I haven't measured that directly on the Mac.
 
 Below p99.9 the three `ArrayBlockingQueue` variants are close to identical: p50 3.0 to 3.1 µs, p99 9.4 to 10.0 µs at 1M msg/s. Their medians are dominated by the handoff, since every message wakes the engine thread through the queue's lock. The differences show up past p99.9. In the percentile plot `baseline` climbs to about 500 µs, `alloc-free` to about 75 µs and `ladder-book` stays near 30 µs. Where `baseline`'s 500 µs comes from is traced in the next section.
 
@@ -12,7 +12,7 @@ At 250k msg/s `baseline` did one G1 young collection per run and its max went to
 
 None of the `ArrayBlockingQueue` variants reliably keep up at 2M msg/s. `baseline` fell behind in all 5 runs, `alloc-free` and `ladder-book` in 4 of 5. Once the queue backs up, latency goes to tens of milliseconds. The knee is somewhere between 1M and 2M msg/s on this hardware and I didn't sweep finer than that.
 
-The `spsc` ring with a spinning consumer is the clear change: p50 0.3 µs, p99 0.5 µs, p99.9 2.2 µs, and it keeps up at 2M msg/s in every run with the same p99.9. Max latency across a 1.8M-message measured window was about 25 µs. Its percentile curve has a step near p99.8, from about 0.7 µs to 2 µs, which also gets its own section below.
+Replacing the queue with the `spsc` ring and a spinning consumer moved every percentile: p50 0.3 µs, p99 0.5 µs, p99.9 2.2 µs, and it keeps up at 2M msg/s in every run with the same p99.9. Max latency across a 1.8M-message measured window was about 25 µs. Its percentile curve has a step near p99.8, from about 0.7 µs to 2 µs, which also gets its own section below.
 
 `--wait yield` behaves almost exactly like spin and uses the same 2.0 cores. On a dedicated core there's nothing else to run, so `Thread.yield()` returns immediately. `--wait park` has p50 27 µs and p99.9 54.5 µs at every rate, with almost no spread. `LockSupport.parkNanos(1000)` asks for 1 µs, but the sleep actually lasts about 50 µs, which matches Linux's default timer slack. Park drops CPU to about 1.1 cores, the remainder being the reader spinning on its schedule.
 
