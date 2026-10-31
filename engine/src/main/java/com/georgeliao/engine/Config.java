@@ -5,11 +5,13 @@ import java.nio.file.Path;
 
 /** Command-line options for a single run. */
 public record Config(String variant, Path feed, long rate, long warmup, int warmupPasses, int readerCpu, int engineCpu,
-        WaitStrategy waitStrategy, Path outliers, long outlierLatencyMicros, long outlierServiceMicros, Path out) {
+        WaitStrategy waitStrategy, Path outliers, long outlierLatencyMicros, long outlierServiceMicros, int bookCapacity,
+        Path out) {
 
     public static final String USAGE =
             "usage: engine --variant <name> --feed <file> [--rate <msgs/s>] [--warmup <msgs>] [--warmup-passes <n>] [--cpus <reader>,<engine>]"
             + " [--wait spin|yield|park] [--outliers <file.csv>] [--outlier-latency-us <n>] [--outlier-service-us <n>]"
+            + " [--book-capacity <orders>]"
             + " [--out <file.hgrm>]";
 
     public static Config parse(String[] args) {
@@ -24,6 +26,7 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
         Path outliers = null;
         long outlierLatencyMicros = 20;
         long outlierServiceMicros = 1;
+        int bookCapacity = 0;
         Path out = null;
         for (int i = 0; i < args.length; i++) {
             String flag = args[i];
@@ -49,6 +52,7 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
                 case "--outliers" -> outliers = Path.of(value);
                 case "--outlier-latency-us" -> outlierLatencyMicros = Long.parseLong(value);
                 case "--outlier-service-us" -> outlierServiceMicros = Long.parseLong(value);
+                case "--book-capacity" -> bookCapacity = Integer.parseInt(value);
                 case "--out" -> out = Path.of(value);
                 default -> throw new IllegalArgumentException("unknown flag " + flag);
             }
@@ -63,6 +67,6 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
             throw new IllegalArgumentException("--warmup and --warmup-passes must be >= 0");
         }
         return new Config(variant, feed, rate, warmup, warmupPasses, readerCpu, engineCpu, wait, outliers,
-                outlierLatencyMicros, outlierServiceMicros, out);
+                outlierLatencyMicros, outlierServiceMicros, bookCapacity, out);
     }
 }

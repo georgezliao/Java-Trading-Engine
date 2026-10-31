@@ -2,6 +2,7 @@ package com.georgeliao.engine;
 
 import com.georgeliao.engine.book.HashingListener;
 import com.georgeliao.engine.book.LadderBook;
+import com.georgeliao.engine.book.OrderBook;
 import com.georgeliao.engine.book.PooledOrderBook;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.AllocFreePipeline;
@@ -97,6 +98,7 @@ public final class Main {
                     .put("warmup.passes", config.warmupPasses())
                     .put("pinning", Pinning.describe())
                     .put("wait", config.waitStrategy())
+                    .put("book.capacity", config.bookCapacity())
                     .put("cpu.ms", cpuNanos / 1e6)
                     .put("messages", result.messages())
                     .put("triggers", result.triggers())
@@ -132,7 +134,8 @@ public final class Main {
         int capacity = BaselinePipeline.DEFAULT_CAPACITY;
         long rate = config.rate();
         return switch (config.variant()) {
-            case "baseline" -> (out, lat) -> new BaselinePipeline(capacity).run(feed, new Engine(out), rate, lat);
+            case "baseline" -> (out, lat) -> new BaselinePipeline(capacity)
+                    .run(feed, new Engine(new OrderBook(out, config.bookCapacity())), rate, lat);
             case "alloc-free" -> (out, lat) ->
                     new AllocFreePipeline(capacity).run(feed, new Engine(new PooledOrderBook(out)), rate, lat);
             case "ladder-book" -> (out, lat) ->

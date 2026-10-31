@@ -16,11 +16,21 @@ public final class OrderBook implements Book {
 
     private final NavigableMap<Long, ArrayDeque<Order>> bids = new TreeMap<>(Collections.reverseOrder());
     private final NavigableMap<Long, ArrayDeque<Order>> asks = new TreeMap<>();
-    private final Map<Long, Order> byId = new HashMap<>();
+    private final Map<Long, Order> byId;
     private final BookListener listener;
 
     public OrderBook(BookListener listener) {
+        this(listener, 0);
+    }
+
+    /**
+     * {@code expectedOrders > 0} sizes the id index so it doesn't resize until that many orders
+     * rest at once. {@code java.util.HashMap} rehashes everything when it grows, and on the burst
+     * feed those rehashes are the baseline's largest per-message costs.
+     */
+    public OrderBook(BookListener listener, int expectedOrders) {
         this.listener = listener;
+        this.byId = expectedOrders > 0 ? new HashMap<>((int) (expectedOrders / 0.75f) + 1) : new HashMap<>();
     }
 
     @Override
