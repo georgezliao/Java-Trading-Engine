@@ -4,7 +4,7 @@ import java.util.Locale;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Experiment E. What the engine thread does when the ring is empty. Kept deliberately pure (no
+ * What the {@code spsc} engine thread does when the ring is empty. Each one is a single behavior (no
  * spin-then-yield-then-park ladder like Disruptor's SleepingWaitStrategy) so each one's cost shows
  * up on its own.
  */

@@ -27,7 +27,8 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
 /**
- * Cross-thread handoff cost of the four queues in experiment C. Each invocation sends
+ * Cross-thread handoff cost of {@code ArrayBlockingQueue}, both in-house SPSC rings, Agrona's
+ * {@code OneToOneRingBuffer} and the Disruptor. Each invocation sends
  * {@value #BURST} ints from the benchmark thread to a busy-spinning consumer thread and waits
  * until all of them have been consumed, so the score is ns per handoff including the core-to-core
  * cache traffic. Both sides spin; nobody parks except inside ArrayBlockingQueue's lock.

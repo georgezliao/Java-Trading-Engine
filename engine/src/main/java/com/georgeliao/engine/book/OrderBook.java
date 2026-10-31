@@ -10,7 +10,7 @@ import java.util.TreeMap;
 
 /**
  * Baseline limit order book: price-time priority, boxed keys, one deque per level, cancels by
- * linear scan of the level. Deliberately naive; the ladder book in Phase 4 replaces it.
+ * linear scan of the level. This is the starting point the other books are compared against.
  */
 public final class OrderBook implements Book {
 

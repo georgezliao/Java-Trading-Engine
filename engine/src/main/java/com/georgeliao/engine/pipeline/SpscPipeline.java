@@ -9,11 +9,11 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Experiment C. Frame offsets go through a {@link SlotSignalRing} instead of an
+ * The {@code spsc} variant. Frame offsets go through a {@link SlotSignalRing} instead of an
  * {@code ArrayBlockingQueue}: no lock, no parking, no allocation on the handoff. (The slot-signalled
  * ring measured ~28 ns/handoff vs ~65 ns for the index-based {@link SpscIntRing} in HandoffBench.) Both threads
  * busy-spin by default (reader when the ring is full, engine when it's empty), so this burns two
- * cores. {@link WaitStrategy} (experiment E) changes what the engine does when the ring is empty.
+ * cores. {@link WaitStrategy} changes what the engine does when the ring is empty.
  *
  * <p>Offsets are non-negative, so {@code -1} marks the end of the feed.
  */

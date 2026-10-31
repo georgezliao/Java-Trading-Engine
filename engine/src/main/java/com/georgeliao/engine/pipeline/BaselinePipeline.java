@@ -11,7 +11,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Reader thread decodes each frame into a new {@link Message} record and puts it on an
  * {@link ArrayBlockingQueue}; the engine thread takes and processes. Allocation per message, a
- * lock per handoff, and parking when the queue is empty or full. This is the thing to beat.
+ * lock per handoff, and parking when the queue is empty or full. The other variants are measured
+ * against this one.
  */
 public final class BaselinePipeline {
 

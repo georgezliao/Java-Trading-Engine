@@ -3,7 +3,7 @@ package com.georgeliao.engine.pipeline;
 import net.openhft.affinity.Affinity;
 
 /**
- * Experiment D. Pins the reader and engine threads to fixed CPUs with OpenHFT affinity
+ * Pins the reader and engine threads to fixed CPUs with OpenHFT affinity
  * ({@code sched_setaffinity} on Linux). Configured once per process from {@code --cpus}.
  *
  * <p>macOS has no thread-to-core binding API, so there this is a no-op (reported once). That's

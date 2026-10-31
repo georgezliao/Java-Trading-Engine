@@ -5,7 +5,7 @@ import java.util.Arrays;
 import org.agrona.collections.Long2LongHashMap;
 
 /**
- * Experiment B. Same semantics as {@link OrderBook}, laid out as primitive arrays:
+ * Book for the {@code ladder-book} and {@code spsc} variants. Same semantics as {@link OrderBook}, laid out as primitive arrays:
  *
  * <ul>
  *   <li>orders live in parallel arrays indexed by an int slot ({@code ids}, {@code prices},

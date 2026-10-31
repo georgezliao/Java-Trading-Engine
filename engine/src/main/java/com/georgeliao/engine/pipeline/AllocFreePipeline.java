@@ -9,7 +9,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Experiment A. Same threads and same {@link ArrayBlockingQueue} as {@link BaselinePipeline}, so
+ * The {@code alloc-free} variant. Same threads and same {@link ArrayBlockingQueue} as {@link BaselinePipeline}, so
  * only allocation changes: the reader passes preallocated slots that carry a frame offset, and
  * the engine reads fields through a {@link FrameView} over the (read-only, in-memory) feed.
  *
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * one is being filled. The queue's lock gives the happens-before for the slot write.
  *
  * <p>Not fully allocation-free: {@code ArrayBlockingQueue}'s lock allocates a node whenever a
- * thread has to wait. That goes away with the SPSC ring in experiment C.
+ * thread has to wait. {@link SpscPipeline} doesn't have that problem.
  */
 public final class AllocFreePipeline {
 
