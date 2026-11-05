@@ -38,8 +38,13 @@ public final class BaselinePipeline {
      */
     public RunResult run(ByteBuffer feed, Engine engine, long rate, LatencyRecorder recorder)
             throws InterruptedException {
+        return run(feed, engine, Arrivals.fixed(rate), recorder);
+    }
+
+    public RunResult run(ByteBuffer feed, Engine engine, Arrivals arrivals, LatencyRecorder recorder)
+            throws InterruptedException {
         // Small lead so both threads are running before the first message is due.
-        Schedule schedule = new Schedule(System.nanoTime() + 1_000_000, rate);
+        Schedule schedule = new Schedule(System.nanoTime() + 1_000_000, arrivals);
         BlockingQueue<Message> queue = new ArrayBlockingQueue<>(capacity);
         ByteBuffer frames = feed.duplicate().order(feed.order());
         AtomicReference<Throwable> failure = new AtomicReference<>();

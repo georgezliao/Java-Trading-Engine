@@ -40,7 +40,12 @@ public final class SpscPipeline {
 
     public RunResult run(ByteBuffer feed, Engine engine, long rate, LatencyRecorder recorder)
             throws InterruptedException {
-        Schedule schedule = new Schedule(System.nanoTime() + 1_000_000, rate);
+        return run(feed, engine, Arrivals.fixed(rate), recorder);
+    }
+
+    public RunResult run(ByteBuffer feed, Engine engine, Arrivals arrivals, LatencyRecorder recorder)
+            throws InterruptedException {
+        Schedule schedule = new Schedule(System.nanoTime() + 1_000_000, arrivals);
         SlotSignalRing ring = new SlotSignalRing(capacity);
         int start = feed.position();
         int end = feed.limit();

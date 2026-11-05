@@ -40,7 +40,12 @@ public final class AllocFreePipeline {
 
     public RunResult run(ByteBuffer feed, Engine engine, long rate, LatencyRecorder recorder)
             throws InterruptedException {
-        Schedule schedule = new Schedule(System.nanoTime() + 1_000_000, rate);
+        return run(feed, engine, Arrivals.fixed(rate), recorder);
+    }
+
+    public RunResult run(ByteBuffer feed, Engine engine, Arrivals arrivals, LatencyRecorder recorder)
+            throws InterruptedException {
+        Schedule schedule = new Schedule(System.nanoTime() + 1_000_000, arrivals);
         BlockingQueue<Slot> queue = new ArrayBlockingQueue<>(capacity);
         Slot[] slots = new Slot[capacity + 2];
         for (int i = 0; i < slots.length; i++) {
