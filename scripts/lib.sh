@@ -25,6 +25,8 @@ fi
 PIN=${CPUS:+--cpus $CPUS}
 # WAIT=spin|yield|park sets the spsc consumer wait strategy.
 PIN="$PIN${WAIT:+ --wait $WAIT}"
+# ARRIVALS=fixed|poisson|bursty sets the arrival process.
+PIN="$PIN${ARRIVALS:+ --arrivals $ARRIVALS}"
 
 # new_run <name>: make results/local/<timestamp>-<name>, record git + java, print the path.
 new_run() {

@@ -6,6 +6,7 @@ import com.georgeliao.engine.book.OrderBook;
 import com.georgeliao.engine.book.PooledOrderBook;
 import com.georgeliao.engine.feed.FeedGenerator;
 import com.georgeliao.engine.pipeline.AllocFreePipeline;
+import com.georgeliao.engine.pipeline.Arrivals;
 import com.georgeliao.engine.pipeline.BaselinePipeline;
 import com.georgeliao.engine.pipeline.LatencyRecorder;
 import com.georgeliao.engine.pipeline.Pinning;
@@ -15,6 +16,7 @@ import com.georgeliao.engine.metrics.OutlierRecorder;
 import com.georgeliao.engine.metrics.RunMetadata;
 import com.georgeliao.engine.pipeline.RunResult;
 import com.georgeliao.engine.pipeline.SpscPipeline;
+import com.georgeliao.engine.wire.Codec;
 import java.lang.management.ManagementFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -99,6 +101,8 @@ public final class Main {
                     .put("pinning", Pinning.describe())
                     .put("wait", config.waitStrategy())
                     .put("book.capacity", config.bookCapacity())
+                    .put("arrivals", config.arrivals())
+                    .put("arrival.seed", config.arrivalSeed())
                     .put("cpu.ms", cpuNanos / 1e6)
                     .put("messages", result.messages())
                     .put("triggers", result.triggers())
@@ -132,16 +136,16 @@ public final class Main {
 
     private static Variant variant(Config config, ByteBuffer feed) {
         int capacity = BaselinePipeline.DEFAULT_CAPACITY;
-        long rate = config.rate();
+        Arrivals arrivals = Arrivals.of(config.arrivals(), feed.limit() / Codec.FRAME_SIZE, config.rate(), config.arrivalSeed());
         return switch (config.variant()) {
             case "baseline" -> (out, lat) -> new BaselinePipeline(capacity)
-                    .run(feed, new Engine(new OrderBook(out, config.bookCapacity())), rate, lat);
+                    .run(feed, new Engine(new OrderBook(out, config.bookCapacity())), arrivals, lat);
             case "alloc-free" -> (out, lat) ->
-                    new AllocFreePipeline(capacity).run(feed, new Engine(new PooledOrderBook(out)), rate, lat);
+                    new AllocFreePipeline(capacity).run(feed, new Engine(new PooledOrderBook(out)), arrivals, lat);
             case "ladder-book" -> (out, lat) ->
-                    new AllocFreePipeline(capacity).run(feed, new Engine(new LadderBook(out)), rate, lat);
+                    new AllocFreePipeline(capacity).run(feed, new Engine(new LadderBook(out)), arrivals, lat);
             case "spsc" -> (out, lat) ->
-                    new SpscPipeline(capacity, config.waitStrategy()).run(feed, new Engine(new LadderBook(out)), rate, lat);
+                    new SpscPipeline(capacity, config.waitStrategy()).run(feed, new Engine(new LadderBook(out)), arrivals, lat);
             default -> null;
         };
     }

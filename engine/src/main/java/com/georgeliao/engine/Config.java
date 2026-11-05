@@ -1,17 +1,18 @@
 package com.georgeliao.engine;
 
+import com.georgeliao.engine.pipeline.Arrivals;
 import com.georgeliao.engine.pipeline.WaitStrategy;
 import java.nio.file.Path;
 
 /** Command-line options for a single run. */
 public record Config(String variant, Path feed, long rate, long warmup, int warmupPasses, int readerCpu, int engineCpu,
         WaitStrategy waitStrategy, Path outliers, long outlierLatencyMicros, long outlierServiceMicros, int bookCapacity,
-        Path out) {
+        Arrivals.Mode arrivals, long arrivalSeed, Path out) {
 
     public static final String USAGE =
             "usage: engine --variant <name> --feed <file> [--rate <msgs/s>] [--warmup <msgs>] [--warmup-passes <n>] [--cpus <reader>,<engine>]"
             + " [--wait spin|yield|park] [--outliers <file.csv>] [--outlier-latency-us <n>] [--outlier-service-us <n>]"
-            + " [--book-capacity <orders>]"
+            + " [--book-capacity <orders>] [--arrivals fixed|poisson|bursty] [--arrival-seed <n>]"
             + " [--out <file.hgrm>]";
 
     public static Config parse(String[] args) {
@@ -27,6 +28,8 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
         long outlierLatencyMicros = 20;
         long outlierServiceMicros = 1;
         int bookCapacity = 0;
+        Arrivals.Mode arrivals = Arrivals.Mode.FIXED;
+        long arrivalSeed = 1;
         Path out = null;
         for (int i = 0; i < args.length; i++) {
             String flag = args[i];
@@ -53,6 +56,8 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
                 case "--outlier-latency-us" -> outlierLatencyMicros = Long.parseLong(value);
                 case "--outlier-service-us" -> outlierServiceMicros = Long.parseLong(value);
                 case "--book-capacity" -> bookCapacity = Integer.parseInt(value);
+                case "--arrivals" -> arrivals = Arrivals.Mode.parse(value);
+                case "--arrival-seed" -> arrivalSeed = Long.parseLong(value);
                 case "--out" -> out = Path.of(value);
                 default -> throw new IllegalArgumentException("unknown flag " + flag);
             }
@@ -67,6 +72,6 @@ public record Config(String variant, Path feed, long rate, long warmup, int warm
             throw new IllegalArgumentException("--warmup and --warmup-passes must be >= 0");
         }
         return new Config(variant, feed, rate, warmup, warmupPasses, readerCpu, engineCpu, wait, outliers,
-                outlierLatencyMicros, outlierServiceMicros, bookCapacity, out);
+                outlierLatencyMicros, outlierServiceMicros, bookCapacity, arrivals, arrivalSeed, out);
     }
 }
