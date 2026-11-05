@@ -1,0 +1,89 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 8382578
+##  Job Name : trading-checks
+##  Nodelist : node1912
+##      CPUs : 
+##   Mem/CPU : 2800 MB
+## Directory : /oscar/home/gzliao/Java-Trading-Engine
+##   Job Started : Thu Nov  5 03:52:58 AM EST 2026
+###############################################################################
+reader=2 engine=3 shared=1,2,3 isolated=1,4,5,6
+== rep 1  baseline-g1-shared @ 1000000
+all       n=1800000 p50=3.0us p99=9.7us p99.9=14.7us p99.99=398.1us max=515.8us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 1  baseline-g1-shared-presized @ 1000000
+all       n=1800000 p50=2.9us p99=9.1us p99.9=11.8us p99.99=17.8us max=57.8us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 1  baseline-zgc-shared @ 1000000
+all       n=1800000 p50=3.1us p99=9.7us p99.9=68.2us p99.99=434.9us max=563.7us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 1  baseline-zgc-isolated @ 1000000
+all       n=1800000 p50=3.0us p99=9.1us p99.9=66.0us p99.99=446.0us max=575.5us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 1  baseline-g1-isolated @ 1000000
+all       n=1800000 p50=2.9us p99=8.9us p99.9=13.7us p99.99=381.7us max=519.4us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 1  spsc-spin-isolated @ 1000000
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.4us p99.99=3.2us max=28.0us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 2  baseline-g1-shared @ 1000000
+all       n=1800000 p50=2.9us p99=9.1us p99.9=13.7us p99.99=374.8us max=513.0us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 2  baseline-g1-shared-presized @ 1000000
+all       n=1800000 p50=2.9us p99=8.7us p99.9=11.2us p99.99=19.9us max=60.3us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 2  baseline-zgc-shared @ 1000000
+all       n=1800000 p50=2.9us p99=8.7us p99.9=67.1us p99.99=447.0us max=582.1us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 2  baseline-zgc-isolated @ 1000000
+all       n=1800000 p50=3.0us p99=9.5us p99.9=76.0us p99.99=448.0us max=578.0us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 2  baseline-g1-isolated @ 1000000
+all       n=1800000 p50=3.0us p99=9.7us p99.9=14.7us p99.99=372.2us max=511.0us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 2  spsc-spin-isolated @ 1000000
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.5us p99.99=3.2us max=29.2us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 3  baseline-g1-shared @ 1000000
+all       n=1800000 p50=3.0us p99=9.6us p99.9=14.7us p99.99=373.0us max=512.0us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 3  baseline-g1-shared-presized @ 1000000
+all       n=1800000 p50=3.0us p99=9.6us p99.9=13.0us p99.99=18.0us max=43.6us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 3  baseline-zgc-shared @ 1000000
+all       n=1800000 p50=3.0us p99=10.5us p99.9=4057.1us p99.99=4755.5us max=4804.6us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 3  baseline-zgc-isolated @ 1000000
+all       n=1800000 p50=3.1us p99=9.8us p99.9=76.8us p99.99=445.7us max=572.4us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 3  baseline-g1-isolated @ 1000000
+all       n=1800000 p50=3.0us p99=9.4us p99.9=14.5us p99.99=386.8us max=516.9us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 3  spsc-spin-isolated @ 1000000
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.5us p99.99=3.1us max=42.9us
+pinning=reader=2(on 2) engine=3(on 3)
+== rep 1  epsilon alloc-free @ 250000
+   used at exit: 119M (2.93%) used
+== rep 1  epsilon alloc-free @ 1000000
+   used at exit: 98160K (2.34%) used
+== rep 1  epsilon spsc @ 250000
+   used at exit: 75934K (1.81%) used
+== rep 1  epsilon spsc @ 1000000
+   used at exit: 75934K (1.81%) used
+== rep 2  epsilon alloc-free @ 250000
+   used at exit: 118M (2.90%) used
+== rep 2  epsilon alloc-free @ 1000000
+   used at exit: 100700K (2.40%) used
+== rep 2  epsilon spsc @ 250000
+   used at exit: 75934K (1.81%) used
+== rep 2  epsilon spsc @ 1000000
+   used at exit: 75934K (1.81%) used
+== rep 3  epsilon alloc-free @ 250000
+   used at exit: 118M (2.89%) used
+== rep 3  epsilon alloc-free @ 1000000
+   used at exit: 100700K (2.40%) used
+== rep 3  epsilon spsc @ 250000
+   used at exit: 75934K (1.81%) used
+== rep 3  epsilon spsc @ 1000000
+   used at exit: 75934K (1.81%) used
+results in /oscar/home/gzliao/Java-Trading-Engine/results/oscar/8382578
