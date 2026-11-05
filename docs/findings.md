@@ -111,3 +111,22 @@ With `SlotSignalRing` and a spinning consumer, p50 dropped from about 2.5 µs (t
 Parking costs about 3 µs at the median, which is roughly how long macOS takes to wake the thread. CPU never drops much below 1.5 cores because the reader thread also spins until each message is due. Tails ranged from 1 to over 100 ms across all three strategies with no pattern I could see, which is the Mac again.
 
 The best `spsc` runs on the Mac were p99 0.6 to 0.9 µs and p99.9 6 to 28 µs. Other runs of the same configuration had millisecond spikes. Pinned runs on Oscar should show which of those is typical.
+
+## Checking the three explanations (Oscar job 8382578)
+
+All on node1912, 1M msg/s, 3 reps each, 1 GB heap, reader on CPU 2 and engine on CPU 3. These numbers are from one job, so they're comparable with each other but not with job 7913307.
+
+| config | p99.9 (µs, 3 reps) | max (µs, 3 reps) |
+|---|---|---|
+| baseline G1 shared | 13.7, 14.7, 14.7 | 513, 512, 516 |
+| baseline G1 shared, presized map | 11.2, 11.8, 13.0 | 60, 58, 44 |
+| baseline G1 isolated | 13.7, 14.5, 14.7 | 519, 517, 511 |
+| baseline ZGC shared | 67.1, 68.2, 4057 | 582, 564, 4805 |
+| baseline ZGC isolated | 66.0, 76.0, 76.8 | 576, 578, 572 |
+| spsc spin isolated | 2.4, 2.5, 2.5 | 28, 43, 29 |
+
+Presizing the `HashMap` took the max from about 515 µs to 44-60 µs, so the resize explanation held up. I'd predicted tens of µs, and that's what happened. p99.99 fell from about 375 µs to about 18 µs as well.
+
+The ZGC explanation failed. I thought ZGC's tail came from its threads sharing cores with the pinned threads, so isolating them should have pulled p99.9 down toward 14 µs. It stayed around 70 µs and the max stayed near 575 µs, so sharing doesn't explain this tail. I don't have a replacement explanation yet. The 575 µs max looks a lot like G1's 515 µs resize max, but I haven't traced it. One shared rep hit 4057 µs at p99.9, and I haven't looked into that either. The `.meta` files record the pinned CPUs but not the taskset mask, so I still need to check from the script that isolation did what I meant it to.
+
+The queue allocation check came out the way I expected. With Epsilon (4 GB, no warmup), alloc-free used 118-119 MB at exit at 250K msg/s and 98-101 MB at 1M, so the slower rate, with more waiting on the `ArrayBlockingQueue`, used more heap. spsc used exactly 75934 KB in all six runs. That fits allocation on queue waits, but heap at exit doesn't show where the bytes were allocated.
