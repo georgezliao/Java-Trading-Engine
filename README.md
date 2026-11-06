@@ -79,6 +79,10 @@ From Oscar job 7913307: an exclusive `48core` node (2x Intel Xeon Platinum 8268,
 
 The percentile plot uses the run with the median p99.9 for each configuration. Two features of it are traced in [docs/findings.md](docs/findings.md): `baseline`'s ~500 µs maximum is a `java.util.HashMap` resize in the order book's id index, and the step in the `spsc` curves near p99.8 is the kernel's 1,000 Hz timer interrupt on the reader and engine cores. The follow-up job is `scripts/oscar_profile.sbatch` and its output is in `results/oscar/7954130/`.
 
+Job 8382578 (`scripts/oscar_checks.sbatch`, 3 reps at 1M msg/s) tested three explanations. Pre-sizing the `HashMap` dropped `baseline`'s maximum from about 515 µs to 44-60 µs. Keeping GC threads off the reader and engine cores didn't help ZGC: p99.9 stayed at 66-77 µs, so core sharing isn't the cause, and the actual cause is still unknown. Under Epsilon, `alloc-free` used about 118 MB at 250K msg/s and 100 MB at 1M, with `spsc` flat at 75934 KB, which fits `ArrayBlockingQueue` allocating when the engine thread waits.
+
+Job 8382612 (`scripts/oscar_arrivals.sbatch`) compared arrival processes at the same nominal mean rate. Poisson changes little. Under bursty arrivals at 1M msg/s, p99.9 goes from about 15 µs to over 2 ms for both `ArrayBlockingQueue` variants, while `spsc` stays at 3.0 µs, though its maximum reaches about 1.16 ms. Details are in [docs/findings.md](docs/findings.md).
+
 The job script is `scripts/oscar.sbatch`; `.meta` files next to each histogram record the exact JVM flags, pinning and output hash. On Oscar there is no control over `isolcpus`, `nohz_full`, the frequency governor or turbo. `taskset` keeps the JVM on cores 1 to 3, but only the reader and engine threads are pinned to a single core each, so GC and JIT threads can still run on cores 2 and 3. Development runs on macOS aren't comparable to these: macOS has no thread pinning and moves threads between core types.
 
 The Dockerfile builds and runs the engine anywhere (`docker build -t trading-engine . && docker run --rm trading-engine`). It hasn't been built yet, and container timings aren't used.
@@ -86,23 +90,22 @@ The Dockerfile builds and runs the engine anywhere (`docker build -t trading-eng
 ## Limitations
 
 - One instrument and one toy strategy. The book handles price-time priority, partial fills and cancels, nothing else.
-- The feed carries no timestamps. The `burst` profile changes message content (bigger price moves, more orders and cancels), not arrival timing.
+- The feed carries no timestamps. The `burst` profile changes message content (bigger price moves, more orders and cancels), not arrival timing. `--arrivals` controls timing separately.
+- `--arrivals bursty` delivers less than the requested mean rate: about 5.7% less at 250K msg/s and 1.7% less at 1M, because a quiet-state gap can overrun into the next burst. Results in `results/oscar/8382612/` carry this bias, and `summary.md` there wrongly marks those runs as behind.
 - The reader thread busy-spins until each message is due, so process CPU time is at least one core regardless of wait strategy.
 - Thread pinning uses OpenHFT affinity and does nothing on macOS. On Linux, each run's `.meta` file shows the CPU each thread actually ran on.
 - The hyperthread-sibling configuration in `scripts/oscar.sbatch` needs a node with SMT; the `48core` nodes have none, so it hasn't run.
 
 ## Planned work
 
-`scripts/oscar_checks.sbatch` is written but hasn't run yet. It tests three explanations in the findings that are still inferred.
+Open questions from the results so far:
 
-- Does pre-sizing the baseline's `HashMap` (`--book-capacity`) remove its ~515 µs maximum?
-- Does ZGC's p99.9 drop toward G1's when GC and JIT threads can't run on the reader and engine cores?
-- Does `alloc-free` allocate more at 250k msg/s than at 1M msg/s because `ArrayBlockingQueue` allocates when the engine thread waits?
+- What causes ZGC's p99.9 of about 70 µs? It isn't core sharing: isolating GC threads from the reader and engine cores didn't help. Running ZGC with `--book-capacity 65536` would show how much of it is the `HashMap` resizes.
+- What causes the ~1 ms maximum for `spsc` under bursty arrivals, and the ~320 µs maximum at 500K msg/s under all arrival modes?
 
-After that:
+Other experiments:
 
 - Finer rate sweeps to locate the `ArrayBlockingQueue` knee between 1M and 2M msg/s, and to find where `spsc` falls behind, since it never did up to 2M.
-- Poisson and clustered arrivals. Evenly spaced messages hide queueing and let the send schedule phase-lock with the timer tick.
 - CPU placement: reader and engine on different sockets, and on hyperthread siblings on a node type with SMT.
 - A real network hop (UDP or Aeron between two nodes). The feed currently comes from memory, so no number here includes a network.
 - An input journal with replay recovery, using the output hash to prove the recovered state matches.
