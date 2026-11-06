@@ -16,7 +16,7 @@ Replacing the queue with the `spsc` ring and a spinning consumer moved every per
 
 `--wait yield` behaves almost exactly like spin and uses the same 2.0 cores. On a dedicated core there's nothing else to run, so `Thread.yield()` returns immediately. `--wait park` has p50 27 µs and p99.9 54.5 µs at every rate, with almost no spread. `LockSupport.parkNanos(1000)` asks for 1 µs, but the sleep actually lasts about 50 µs, which matches Linux's default timer slack. Park drops CPU to about 1.1 cores, the remainder being the reader spinning on its schedule.
 
-ZGC made `baseline` worse: p99.9 95 µs against 14.5 µs with G1 at 1M msg/s, and 247 µs against 11 µs at 250k. ZGC ran 18 collection cycles per run at 250k and 6 at 1M. `taskset` limits the JVM to three cores and only the reader and engine are pinned individually, so ZGC's concurrent threads can land on the same cores as them. That's my best explanation; I haven't checked where the GC threads actually ran.
+ZGC made `baseline` worse: p99.9 95 µs against 14.5 µs with G1 at 1M msg/s, and 247 µs against 11 µs at 250k. ZGC ran 18 collection cycles per run at 250k and 6 at 1M. `taskset` limits the JVM to three cores and only the reader and engine are pinned individually, so ZGC's concurrent threads can land on the same cores as them. That was my best explanation at the time. Job 8382578 tested it and it failed, see "Checking the three explanations" below.
 
 The hyperthread-sibling experiment didn't run because these nodes have SMT turned off.
 
@@ -127,6 +127,39 @@ All on node1912, 1M msg/s, 3 reps each, 1 GB heap, reader on CPU 2 and engine on
 
 Presizing the `HashMap` took the max from about 515 µs to 44-60 µs, so the resize explanation held up. I'd predicted tens of µs, and that's what happened. p99.99 fell from about 375 µs to about 18 µs as well.
 
-The ZGC explanation failed. I thought ZGC's tail came from its threads sharing cores with the pinned threads, so isolating them should have pulled p99.9 down toward 14 µs. It stayed around 70 µs and the max stayed near 575 µs, so sharing doesn't explain this tail. I don't have a replacement explanation yet. The 575 µs max looks a lot like G1's 515 µs resize max, but I haven't traced it. One shared rep hit 4057 µs at p99.9, and I haven't looked into that either. The `.meta` files record the pinned CPUs but not the taskset mask, so I still need to check from the script that isolation did what I meant it to.
+The ZGC explanation failed. I thought ZGC's tail came from its threads sharing cores with the pinned threads, so isolating them should have pulled p99.9 down toward 14 µs. It stayed around 70 µs and the max stayed near 575 µs, so sharing doesn't explain this tail. The isolation itself did what I meant it to: `cpus.txt` shows the shared mask was 1,2,3 and the isolated mask 1,4,5,6, the JVM saw 3 and 4 CPUs, and `.meta` shows the reader and engine on CPUs 2 and 3 in every run. So nothing but those two threads was allowed on 2 and 3.
+
+I don't have a replacement explanation yet. The safepoint logs show 22 pauses per run, and the longest total I saw was 189 µs, so pauses alone can't reach a 575 µs max. That max looks a lot like G1's 515 µs resize max, which makes me think the resizes are still in there, but I haven't traced it. Running ZGC with `--book-capacity 65536` would check that. One shared rep hit 4057 µs at p99.9, and I haven't looked into that either.
 
 The queue allocation check came out the way I expected. With Epsilon (4 GB, no warmup), alloc-free used 118-119 MB at exit at 250K msg/s and 98-101 MB at 1M, so the slower rate, with more waiting on the `ArrayBlockingQueue`, used more heap. spsc used exactly 75934 KB in all six runs. That fits allocation on queue waits, but heap at exit doesn't show where the bytes were allocated.
+
+## Fixed vs Poisson vs bursty arrivals (Oscar job 8382612)
+
+Same node as the checks (node1912), G1 1 GB, reader on CPU 2, engine on CPU 3, taskset 1,2,3, 2 warmup replays, 3 reps of each. All 81 runs produced output hash `267f6f3118b59791`, so arrival timing didn't change what the engine did. Table is the median of 3 reps, p99.9 in µs.
+
+| variant | rate | fixed | Poisson | bursty |
+|---|---|---|---|---|
+| baseline | 250K | 11.4 | 11.3 | 15.0 |
+| baseline | 500K | 10.7 | 12.0 | 133.5 |
+| baseline | 1M | 15.6 | 16.0 | 2312 |
+| ladder-book | 250K | 9.7 | 11.0 | 12.6 |
+| ladder-book | 500K | 9.9 | 10.9 | 87.7 |
+| ladder-book | 1M | 12.6 | 12.0 | 2312 |
+| spsc | 250K | 0.7 | 2.1 | 2.3 |
+| spsc | 500K | 2.0 | 2.2 | 2.5 |
+| spsc | 1M | 2.3 | 2.3 | 3.0 |
+
+Poisson barely moved anything except `spsc` at 250K. Bursty is where it gets interesting: both `ArrayBlockingQueue` variants went from about 15 µs to over 2 ms at 1M msg/s, and p50 went to 184 µs for baseline and 214 µs for ladder-book, so even the median message is waiting in a backlog. `spsc` at the same mean rate stayed at p50 0.3 µs and p99.9 3.0 µs. Bursts run at 4x the mean, so 500K means 2M msg/s peaks, and that's the rate where the ABQ variants mostly fell behind in job 7913307. That lines up with the tail appearing at 500K and not at 250K, but I didn't measure the backlog directly.
+
+`spsc` isn't untouched by bursts: at 1M its p99.99 is 517-1034 µs and its max is about 1.16 ms, against about 3 µs and 26 µs with fixed arrivals. I don't know why yet.
+
+The timer-tick step looks different too. With fixed arrivals at 250K, two of three `spsc` runs had p99.9 around 0.7 µs and the third 2.3 µs. All three Poisson runs were about 2.1 µs, and the curve starts climbing around p99.8 (about 1.2 µs). My guess is that evenly spaced arrivals can land between ticks and hide the step, depending on the phase of each run, which is what I worried about in the README. I haven't tested that.
+
+Some things I can't explain:
+
+- Baseline fixed at 250K had a max around 4.4 ms in all three reps. Those `.meta` files show one G1 collection taking 4 ms, so that one looks like GC.
+- Baseline Poisson at 500K rep 2 had p99.9 7610 µs and max 8970 µs, while the other two reps were about 12 µs. `.meta` shows 0 collections. This job has no safepoint logs, so I can't say what stalled it.
+- At 500K, `spsc` has a max of about 320 µs in all three arrival modes and at 1M it's about 26 µs. `ladder-book` shows about 335 µs for fixed and bursty at 500K, but only about 30 µs for Poisson. Neither has a `HashMap` to resize, so this isn't the resize.
+
+The bursty schedule has a bug. A gap drawn in the quiet state can run past the end of that state, and the time it overshoots comes out of the next burst. That loses roughly one quiet gap per cycle, which works out to about 6.4% of messages at 250K and 1.6% at 1M, and the measured schedules were 5.7% and 1.7% slow (8454 ms instead of 8000, 2035 instead of 2000). So bursty ran at about 236K, 485K and 983K msg/s rather than the nominal rates. `summary.md` marks all bursty runs as behind, but that's this bug: elapsed time matches across all three variants to within 0.1 ms per second, so they all kept to the schedule's length. The numbers are still valid measurements, just at slightly lower load than the labels say. `ArrivalsTest` missed it because it allows 5% and runs at 500K. Note that `run.txt` for this job says `git=66e8415`, because the checkout on Oscar wasn't updated; the jar was built from `150e5a4`.
+
