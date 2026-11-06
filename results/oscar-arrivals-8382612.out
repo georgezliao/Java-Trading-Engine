@@ -1,0 +1,173 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 8382612
+##  Job Name : trading-arrivals
+##  Nodelist : node1912
+##      CPUs : 
+##   Mem/CPU : 2800 MB
+## Directory : /oscar/home/gzliao/Java-Trading-Engine
+##   Job Started : Thu Nov  5 03:56:20 AM EST 2026
+###############################################################################
+housekeeping=1 reader=2 engine=3
+== baseline-fixed-250000-r1
+all       n=1800000 p50=3.9us p99=6.5us p99.9=11.1us p99.99=3788.8us max=4378.6us
+== ladder-book-fixed-250000-r1
+all       n=1800000 p50=3.9us p99=6.6us p99.9=9.9us p99.99=12.6us max=105.9us
+== spsc-fixed-250000-r1
+all       n=1800000 p50=0.3us p99=0.5us p99.9=0.7us p99.99=3.1us max=76.2us
+== baseline-poisson-250000-r1
+all       n=1800000 p50=4.0us p99=7.4us p99.9=11.2us p99.99=301.6us max=773.1us
+== ladder-book-poisson-250000-r1
+all       n=1800000 p50=3.9us p99=7.4us p99.9=10.7us p99.99=17.7us max=449.3us
+== spsc-poisson-250000-r1
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.2us p99.99=4.7us max=207.2us
+== baseline-bursty-250000-r1
+all       n=1800000 p50=3.9us p99=10.4us p99.9=14.9us p99.99=384.5us max=501.8us
+== ladder-book-bursty-250000-r1
+all       n=1800000 p50=4.0us p99=10.9us p99.9=14.7us p99.99=21.6us max=542.2us
+== spsc-bursty-250000-r1
+all       n=1800000 p50=0.3us p99=0.6us p99.9=2.2us p99.99=3.5us max=54.7us
+== baseline-fixed-500000-r1
+all       n=1800000 p50=3.0us p99=7.7us p99.9=11.3us p99.99=304.1us max=498.2us
+== ladder-book-fixed-500000-r1
+all       n=1800000 p50=3.0us p99=7.5us p99.9=10.0us p99.99=30.9us max=349.7us
+== spsc-fixed-500000-r1
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.0us p99.99=19.6us max=321.0us
+== baseline-poisson-500000-r1
+all       n=1800000 p50=3.5us p99=8.9us p99.9=12.0us p99.99=272.6us max=505.3us
+== ladder-book-poisson-500000-r1
+all       n=1800000 p50=3.5us p99=9.0us p99.9=11.2us p99.99=14.6us max=35.2us
+== spsc-poisson-500000-r1
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.2us p99.99=39.0us max=322.3us
+== baseline-bursty-500000-r1
+all       n=1800000 p50=10.9us p99=59.3us p99.9=84.4us p99.99=164.1us max=535.0us
+== ladder-book-bursty-500000-r1
+all       n=1800000 p50=12.6us p99=75.1us p99.9=108.7us p99.99=181.0us max=335.4us
+== spsc-bursty-500000-r1
+all       n=1800000 p50=0.3us p99=0.6us p99.9=2.4us p99.99=4.0us max=310.5us
+== baseline-fixed-1000000-r1
+all       n=1800000 p50=3.0us p99=9.7us p99.9=14.7us p99.99=394.0us max=521.7us
+== ladder-book-fixed-1000000-r1
+all       n=1800000 p50=2.9us p99=9.4us p99.9=12.5us p99.99=16.1us max=45.4us
+== spsc-fixed-1000000-r1
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.5us p99.99=3.8us max=26.9us
+== baseline-poisson-1000000-r1
+all       n=1800000 p50=3.5us p99=10.5us p99.9=15.9us p99.99=384.3us max=518.1us
+== ladder-book-poisson-1000000-r1
+all       n=1800000 p50=3.1us p99=9.4us p99.9=12.0us p99.99=15.6us max=62.8us
+== spsc-poisson-1000000-r1
+all       n=1800000 p50=0.3us p99=0.6us p99.9=2.3us p99.99=3.5us max=27.7us
+== baseline-bursty-1000000-r1
+all       n=1800000 p50=183.9us p99=1309.7us p99.9=2175.0us p99.99=2441.2us max=2492.4us
+== ladder-book-bursty-1000000-r1
+all       n=1800000 p50=169.9us p99=1259.5us p99.9=2099.2us p99.99=2394.1us max=2439.2us
+== spsc-bursty-1000000-r1
+all       n=1800000 p50=0.3us p99=1.0us p99.9=2.8us p99.99=1033.7us max=1166.3us
+== baseline-fixed-250000-r2
+all       n=1800000 p50=3.9us p99=6.3us p99.9=10.9us p99.99=3772.4us max=4370.4us
+== ladder-book-fixed-250000-r2
+all       n=1800000 p50=3.9us p99=5.9us p99.9=9.7us p99.99=11.8us max=221.7us
+== spsc-fixed-250000-r2
+all       n=1800000 p50=0.3us p99=0.5us p99.9=0.7us p99.99=1.4us max=30.8us
+== baseline-poisson-250000-r2
+all       n=1800000 p50=4.0us p99=7.7us p99.9=12.0us p99.99=427.3us max=982.5us
+== ladder-book-poisson-250000-r2
+all       n=1800000 p50=3.9us p99=8.0us p99.9=11.3us p99.99=15.9us max=434.2us
+== spsc-poisson-250000-r2
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.1us p99.99=3.1us max=109.1us
+== baseline-bursty-250000-r2
+all       n=1800000 p50=3.8us p99=9.8us p99.9=13.5us p99.99=410.4us max=528.4us
+== ladder-book-bursty-250000-r2
+all       n=1800000 p50=3.8us p99=9.3us p99.9=12.5us p99.99=21.7us max=497.7us
+== spsc-bursty-250000-r2
+all       n=1800000 p50=0.3us p99=0.6us p99.9=2.2us p99.99=4.7us max=121.7us
+== baseline-fixed-500000-r2
+all       n=1800000 p50=2.8us p99=7.2us p99.9=10.6us p99.99=277.2us max=511.0us
+== ladder-book-fixed-500000-r2
+all       n=1800000 p50=3.0us p99=7.2us p99.9=9.4us p99.99=28.2us max=345.6us
+== spsc-fixed-500000-r2
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.3us p99.99=6.7us max=318.0us
+== baseline-poisson-500000-r2
+all       n=1800000 p50=3.5us p99=9.8us p99.9=7610.4us p99.99=8757.2us max=8970.2us
+== ladder-book-poisson-500000-r2
+all       n=1800000 p50=3.4us p99=8.7us p99.9=10.9us p99.99=14.1us max=28.0us
+== spsc-poisson-500000-r2
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.2us p99.99=17.0us max=328.2us
+== baseline-bursty-500000-r2
+all       n=1800000 p50=13.8us p99=88.6us p99.9=133.1us p99.99=172.3us max=516.4us
+== ladder-book-bursty-500000-r2
+all       n=1800000 p50=9.1us p99=59.0us p99.9=87.5us p99.99=229.1us max=332.0us
+== spsc-bursty-500000-r2
+all       n=1800000 p50=0.3us p99=0.6us p99.9=2.5us p99.99=4.1us max=322.8us
+== baseline-fixed-1000000-r2
+all       n=1800000 p50=3.1us p99=9.9us p99.9=15.6us p99.99=399.9us max=525.8us
+== ladder-book-fixed-1000000-r2
+all       n=1800000 p50=2.9us p99=8.8us p99.9=11.0us p99.99=15.5us max=58.6us
+== spsc-fixed-1000000-r2
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.3us p99.99=2.8us max=26.3us
+== baseline-poisson-1000000-r2
+all       n=1800000 p50=3.4us p99=10.0us p99.9=14.8us p99.99=383.2us max=523.3us
+== ladder-book-poisson-1000000-r2
+all       n=1800000 p50=3.2us p99=9.4us p99.9=12.2us p99.99=16.8us max=51.1us
+== spsc-poisson-1000000-r2
+all       n=1800000 p50=0.3us p99=0.6us p99.9=2.2us p99.99=3.2us max=26.5us
+== baseline-bursty-1000000-r2
+all       n=1800000 p50=210.7us p99=1482.8us p99.9=2306.0us p99.99=2594.8us max=2666.5us
+== ladder-book-bursty-1000000-r2
+all       n=1800000 p50=230.1us p99=1692.7us p99.9=2678.8us p99.99=2959.4us max=3014.7us
+== spsc-bursty-1000000-r2
+all       n=1800000 p50=0.3us p99=1.0us p99.9=3.0us p99.99=1014.3us max=1102.8us
+== baseline-fixed-250000-r3
+all       n=1800000 p50=3.9us p99=6.2us p99.9=11.9us p99.99=3821.6us max=4423.7us
+== ladder-book-fixed-250000-r3
+all       n=1800000 p50=3.8us p99=6.0us p99.9=9.6us p99.99=11.8us max=258.0us
+== spsc-fixed-250000-r3
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.3us p99.99=3.6us max=84.0us
+== baseline-poisson-250000-r3
+all       n=1800000 p50=4.0us p99=7.4us p99.9=11.3us p99.99=124.5us max=518.9us
+== ladder-book-poisson-250000-r3
+all       n=1800000 p50=3.9us p99=7.4us p99.9=11.0us p99.99=17.0us max=524.8us
+== spsc-poisson-250000-r3
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.1us p99.99=3.0us max=85.6us
+== baseline-bursty-250000-r3
+all       n=1800000 p50=4.0us p99=10.7us p99.9=15.0us p99.99=415.2us max=533.0us
+== ladder-book-bursty-250000-r3
+all       n=1800000 p50=3.7us p99=9.3us p99.9=12.2us p99.99=16.2us max=284.9us
+== spsc-bursty-250000-r3
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.2us p99.99=3.2us max=58.2us
+== baseline-fixed-500000-r3
+all       n=1800000 p50=2.8us p99=7.5us p99.9=10.6us p99.99=265.5us max=498.4us
+== ladder-book-fixed-500000-r3
+all       n=1800000 p50=3.0us p99=7.3us p99.9=9.9us p99.99=19.0us max=337.9us
+== spsc-fixed-500000-r3
+all       n=1800000 p50=0.3us p99=0.5us p99.9=1.1us p99.99=5.0us max=317.7us
+== baseline-poisson-500000-r3
+all       n=1800000 p50=3.4us p99=8.3us p99.9=11.6us p99.99=290.6us max=507.4us
+== ladder-book-poisson-500000-r3
+all       n=1800000 p50=3.4us p99=7.1us p99.9=10.3us p99.99=13.0us max=27.1us
+== spsc-poisson-500000-r3
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.2us p99.99=10.5us max=313.6us
+== baseline-bursty-500000-r3
+all       n=1800000 p50=14.5us p99=96.2us p99.9=138.8us p99.99=180.6us max=511.7us
+== ladder-book-bursty-500000-r3
+all       n=1800000 p50=8.8us p99=55.2us p99.9=77.5us p99.99=104.8us max=331.5us
+== spsc-bursty-500000-r3
+all       n=1800000 p50=0.3us p99=0.7us p99.9=2.5us p99.99=4.2us max=332.0us
+== baseline-fixed-1000000-r3
+all       n=1800000 p50=3.2us p99=10.4us p99.9=15.6us p99.99=393.2us max=528.9us
+== ladder-book-fixed-1000000-r3
+all       n=1800000 p50=3.0us p99=9.5us p99.9=12.8us p99.99=15.9us max=34.6us
+== spsc-fixed-1000000-r3
+all       n=1800000 p50=0.3us p99=0.5us p99.9=2.0us p99.99=3.2us max=25.9us
+== baseline-poisson-1000000-r3
+all       n=1800000 p50=3.5us p99=10.7us p99.9=15.9us p99.99=377.6us max=517.9us
+== ladder-book-poisson-1000000-r3
+all       n=1800000 p50=3.1us p99=9.1us p99.9=11.7us p99.99=15.1us max=34.6us
+== spsc-poisson-1000000-r3
+all       n=1800000 p50=0.3us p99=0.6us p99.9=2.2us p99.99=3.3us max=25.4us
+== baseline-bursty-1000000-r3
+all       n=1800000 p50=167.2us p99=1287.2us p99.9=2719.7us p99.99=3039.2us max=3092.5us
+== ladder-book-bursty-1000000-r3
+all       n=1800000 p50=214.3us p99=1539.1us p99.9=2310.1us p99.99=2627.6us max=2666.5us
+== spsc-bursty-1000000-r3
+all       n=1800000 p50=0.3us p99=0.9us p99.9=3.0us p99.99=517.1us max=1157.1us
+results in /oscar/home/gzliao/Java-Trading-Engine/results/oscar/8382612
