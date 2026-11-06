@@ -51,8 +51,21 @@ class ArrivalsTest {
     @Test
     void burstyHitsMeanRateAndIsBurstierThanPoisson() {
         Arrivals a = Arrivals.bursty(COUNT, RATE, 1);
-        assertEquals(RATE, meanRate(a), RATE * 0.05);
+        assertEquals(RATE, meanRate(a), RATE * 0.03);
         assertTrue(gapCv(a) > 1.3, "cv " + gapCv(a));
+    }
+
+    /** One seed wanders by about 1%, so this averages several; a bias at low rates still shows. */
+    @Test
+    void burstyMeanRateHasNoBiasAcrossRates() {
+        for (long rate : new long[] {250_000, 500_000, 1_000_000}) {
+            double sum = 0;
+            int seeds = 10;
+            for (int seed = 1; seed <= seeds; seed++) {
+                sum += (COUNT - 1) * 1e9 / Arrivals.bursty(COUNT, rate, seed).offsetNanos(COUNT - 1);
+            }
+            assertEquals(rate, sum / seeds, rate * 0.015, "rate " + rate);
+        }
     }
 
     @Test

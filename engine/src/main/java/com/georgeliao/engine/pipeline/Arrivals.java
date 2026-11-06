@@ -76,11 +76,16 @@ public final class Arrivals {
         double stateEnds = exponential(rng, meanBurst);
         for (int i = 0; i < count; i++) {
             offsets[i] = (long) t;
-            t += exponential(rng, burst ? burstGap : quietGap);
-            while (t >= stateEnds) {
+            // A gap that crosses a state change stops there and is redrawn at the new rate, which
+            // the exponential allows. Letting it run on would eat into the following burst.
+            double next = t + exponential(rng, burst ? burstGap : quietGap);
+            while (next >= stateEnds) {
+                t = stateEnds;
                 burst = !burst;
                 stateEnds += exponential(rng, burst ? meanBurst : meanQuiet);
+                next = t + exponential(rng, burst ? burstGap : quietGap);
             }
+            t = next;
         }
         return new Arrivals(rate, offsets);
     }
