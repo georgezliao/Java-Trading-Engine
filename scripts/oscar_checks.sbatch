@@ -14,6 +14,8 @@
 #      shared:   taskset {hk, reader, engine}; other JVM threads can run on reader/engine cores
 #      isolated: taskset {hk, 3 more cores}; reader/engine then pin themselves onto their own
 #                cores, so no other JVM thread is allowed there
+#    The isolated ZGC tail didn't drop in job 8382578, so baseline-zgc-isolated-presized checks
+#    how much of it is the HashMap resizes.
 # 3. ArrayBlockingQueue allocates when the engine thread waits: alloc-free under Epsilon with a
 #    large heap at 250k vs 1M msg/s, spsc as the no-queue control. Compare heap used at exit.
 #
@@ -74,6 +76,7 @@ for rep in $(seq 1 "$REPS"); do
   run baseline-g1-shared-presized   "$SHARED"   -XX:+UseG1GC baseline 1000000 "--book-capacity 65536" "$rep"
   run baseline-zgc-shared           "$SHARED"   -XX:+UseZGC  baseline 1000000 ""                     "$rep"
   run baseline-zgc-isolated         "$ISOLATED" -XX:+UseZGC  baseline 1000000 ""                     "$rep"
+  run baseline-zgc-isolated-presized "$ISOLATED" -XX:+UseZGC baseline 1000000 "--book-capacity 65536" "$rep"
   run baseline-g1-isolated          "$ISOLATED" -XX:+UseG1GC baseline 1000000 ""                     "$rep"
   run spsc-spin-isolated            "$ISOLATED" -XX:+UseG1GC spsc     1000000 ""                     "$rep"
 done

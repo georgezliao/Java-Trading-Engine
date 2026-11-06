@@ -55,6 +55,8 @@ for rep in $(seq 1 "$REPS"); do
         name="$v-$arrivals-$rate-r$rep"
         echo "== $name"
         taskset -c "$HK,$READER,$ENGINE" "$JAVA" -XX:+UseG1GC -Xms1g -Xmx1g -XX:+AlwaysPreTouch \
+          -Xlog:safepoint=info:file="$WORK/$name.safepoint.log":uptimenanos \
+          -Xlog:gc*:file="$WORK/$name.gc.log":uptimenanos \
           -jar "$JAR" --variant "$v" --feed "$FEED" --rate "$rate" --warmup "$WARMUP" \
           --cpus "$READER,$ENGINE" --arrivals "$arrivals" --out "$WORK/$name.hgrm" \
           > "$WORK/$name.log" 2>&1 || echo "   FAILED"
