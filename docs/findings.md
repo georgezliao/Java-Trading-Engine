@@ -153,7 +153,7 @@ Poisson barely moved anything except `spsc` at 250K. Bursty is where it gets int
 
 `spsc` isn't untouched by bursts: at 1M its p99.99 is 517-1034 µs and its max is about 1.16 ms, against about 3 µs and 26 µs with fixed arrivals. I don't know why yet.
 
-The timer-tick step looks different too. With fixed arrivals at 250K, two of three `spsc` runs had p99.9 around 0.7 µs and the third 2.3 µs. All three Poisson runs were about 2.1 µs, and the curve starts climbing around p99.8 (about 1.2 µs). My guess is that evenly spaced arrivals can land between ticks and hide the step, depending on the phase of each run, which is what I worried about in the README. I haven't tested that.
+The timer-tick step looks different too. With fixed arrivals at 250K, two of three `spsc` runs had p99.9 around 0.7 µs and the third 2.3 µs. All three Poisson runs were about 2.1 µs, and the curve starts climbing around p99.8 (about 1.2 µs). My guess is that evenly spaced arrivals can land between ticks and hide the step, depending on the phase of each run. I haven't tested that.
 
 Some things I can't explain:
 
